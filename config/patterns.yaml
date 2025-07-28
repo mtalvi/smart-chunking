@@ -1,0 +1,240 @@
+# Pattern configuration for Ansible log analysis
+# This file defines the patterns used for error detection
+
+# Ansible-specific error patterns
+ansible_patterns:
+  # Fatal errors - Updated based on real log analysis
+  fatal_patterns:
+    - "fatal:"
+    - "FATAL:"
+    - "Fatal:"
+    - "fatal: [.*]: FAILED!"
+    - "fatal: [.*]: UNREACHABLE!"
+    
+  # Failed task patterns - Enhanced with real patterns
+  failed_patterns:
+    - "failed:"
+    - "FAILED:"
+    - "Failed:"
+    - "...failed"
+    - "task failed"
+    - "playbook failed"
+    - "FAILED - RETRYING:"
+    - "FAILED!"
+    
+  # Error patterns
+  error_patterns:
+    - "error:"
+    - "ERROR:"
+    - "Error:"
+    - "errors:"
+    - "ERRORS:"
+    
+  # Unreachable host patterns - Enhanced
+  unreachable_patterns:
+    - "unreachable:"
+    - "UNREACHABLE:"
+    - "Unreachable:"
+    - "...unreachable"
+    - "host unreachable"
+    - "connection failed"
+    - "UNREACHABLE!"
+    - "Failed to connect to the host"
+    
+  # Exception patterns
+  exception_patterns:
+    - "exception:"
+    - "Exception:"
+    - "EXCEPTION:"
+    - "traceback"
+    - "Traceback"
+    - "TRACEBACK"
+    
+  # Failure patterns - Updated to exclude intentionally ignored failures
+  failure_patterns:
+    - "failure:"
+    - "FAILURE:"
+    - "Failure:"
+    - "failed with return code"
+    - "non-zero return code"
+    - "NO MORE HOSTS LEFT"
+
+  # Ansible execution termination patterns
+  execution_termination:
+    - "NO MORE HOSTS LEFT"
+    - "PLAY RECAP.*failed=[1-9]"
+    - "PLAY RECAP.*unreachable=[1-9]"
+
+# General programming error patterns
+programming_patterns:
+  # Python traceback patterns
+  python_traceback:
+    - "Traceback (most recent call last):"
+    - "  File \""
+    - "    "
+    - "^[A-Za-z_][A-Za-z0-9_]*Error:"
+    - "^[A-Za-z_][A-Za-z0-9_]*Exception:"
+    
+  # Java/JVM stack trace patterns
+  java_stacktrace:
+    - "Exception in thread"
+    - "	at "
+    - "Caused by:"
+    - "java.lang."
+    - ".java:"
+    
+  # Generic error indicators
+  generic_errors:
+    - "ERROR"
+    - "CRITICAL"
+    - "FATAL"
+    - "FAIL"
+    - "ABORT"
+    - "PANIC"
+
+# Regex patterns for more complex matching
+regex_patterns:
+  # Ansible-specific task status patterns
+  ansible_task_status:
+    - "fatal: \\[.*\\]: (FAILED|UNREACHABLE)!"
+    - "FAILED - RETRYING: \\[.*\\]:"
+    
+  # Play recap patterns with actual failures
+  play_recap_errors:
+    - "PLAY RECAP.*failed=[1-9]\\d*"
+    - "PLAY RECAP.*unreachable=[1-9]\\d*"
+    - ".*failed=[1-9]\\d*.*unreachable=[1-9]\\d*"
+    
+  # Return code patterns
+  return_codes:
+    - "return code (?!0\\b)\\d+"
+    - "exit status (?!0\\b)\\d+"
+    - "exit code (?!0\\b)\\d+"
+    
+  # Connection error patterns - Enhanced based on real logs
+  connection_errors:
+    - "Connection (refused|timeout|reset|closed|failed)"
+    - "(SSH|ssh).*(failed|error|refused|timeout)"
+    - "(Timeout|timeout).*(connecting|connection)"
+    - "Failed to connect to the host via ssh"
+    
+  # Assertion failures - From real logs
+  assertion_failures:
+    - '"assertion".*"evaluated_to": false'
+    - 'assertion.*failed'
+
+# Pattern weights for confidence scoring - Adjusted based on analysis
+pattern_weights:
+  fatal_patterns: 0.95
+  failed_patterns: 0.80  # Reduced because of RETRYING patterns
+  error_patterns: 0.75
+  unreachable_patterns: 0.95
+  exception_patterns: 0.85
+  failure_patterns: 0.85
+  execution_termination: 0.98  # Very high confidence
+  python_traceback: 0.90
+  java_stacktrace: 0.85
+  generic_errors: 0.60  # Reduced to avoid false positives
+  ansible_task_status: 0.95
+  play_recap_errors: 0.98
+  return_codes: 0.80
+  connection_errors: 0.90
+  assertion_failures: 0.95
+
+# Enhanced semantic similarity phrases based on real log analysis
+semantic_phrases:
+  error_phrases:
+    - "task execution failed"
+    - "playbook execution error"
+    - "connection could not be established"
+    - "authentication failed"
+    - "permission denied"
+    - "file not found"
+    - "module not found"
+    - "syntax error in playbook" 
+    - "variable not defined"
+    - "template rendering failed"
+    - "host became unreachable"
+    - "timeout waiting for response"
+    - "certificate verification failed"
+    - "package installation failed"
+    - "service startup failed"
+    - "configuration validation error"
+    - "cluster admin must be created"
+    - "assertion evaluation failed"
+    - "ssh connection refused"
+    - "host connection timeout"
+    - "failed to connect via ssh"
+    - "dependency resolution failed"
+    - "package conflict detected"
+    - "rosa installer completion failed"
+    - "cloudformation template failed"
+    - "terraform apply failed"
+
+# Comprehensive exclusion patterns based on log analysis
+exclusions:
+  # Common false positives - Significantly enhanced
+  false_positives:
+    - "# ERROR"  # Comments
+    - "debug.*error"  # Debug messages
+    - "echo.*error"  # Echo statements
+    - "print.*error"  # Print statements
+    - "log.*error"  # Logging messages that aren't actual errors
+    - "Fail if.*"  # Test names or conditional statements with "Fail if"
+    - "Test.*fail.*"  # Test descriptions containing "fail"
+    - "Should fail.*"  # Expected failure test cases
+    - ".*will fail if.*"  # Conditional statements about potential failures
+    - ".*failed=0.*"  # PLAY RECAP with zero failures
+    - ".*unreachable=0.*"  # PLAY RECAP with zero unreachable
+    - ".*Abort if.*"
+    - ".*TASK \\[.*error.*"  # Task names containing error
+    - ".*TASK \\[.*failed.*"  # Task names containing failed
+    - ".*TASK \\[.*unreachable.*"  # Task names containing unreachable
+    - ".*TASK \\[.*fatal.*"  # Task names containing fatal
+    - ".*TASK \\[.*exception.*"  # Task names containing exception
+    - ".*TASK \\[.*failure.*"  # Task names containing failure
+    - ".*\\.\\.\\.ignoring"  # Intentionally ignored failures
+    - "\\[DEPRECATION WARNING\\]:"  # Deprecation warnings
+    - "DeprecationWarning:"  # Python deprecation warnings
+    - "CryptographyDeprecationWarning:"  # Cryptography warnings
+    - "ok: \\[.*\\]"  # Successful task completions
+    - "changed: \\[.*\\]"  # Successful changes
+    - "skipping: \\[.*\\]"  # Skipped tasks
+    - "included: .*"  # Included files/tasks
+    - "WARNING: key_name is DEPRECATED"  # Specific known warning
+    - "/usr/local/lib/python.*DeprecationWarning"  # Python library warnings
+
+  # Success indicators that should never be errors
+  success_indicators:
+    - "ok:"
+    - "changed:"
+    - "skipping:"
+    - "included:"
+    - "All assertions passed"
+    - "PLAY RECAP.*failed=0.*unreachable=0"
+
+  # File extensions to ignore
+  ignore_extensions:
+    - ".bak"
+    - ".tmp"
+    - ".swp"
+    - ".log.gz"
+    - ".binary"
+
+# Context extraction settings
+context:
+  default_before: 5
+  default_after: 10
+  max_context_lines: 50
+  
+# Detection sensitivity levels
+sensitivity:
+  high:
+    confidence_threshold: 0.9
+    pattern_match_threshold: 0.95
+  medium:
+    confidence_threshold: 0.7
+    pattern_match_threshold: 0.8
+  low:
+    confidence_threshold: 0.5
+    pattern_match_threshold: 0.6 

@@ -1,0 +1,30 @@
+2024-12-30 10:00:01 INFO: Ansible playbook starting
+2024-12-30 10:00:02 INFO: Gathering facts from localhost
+2024-12-30 10:00:03 INFO: Facts gathered successfully
+
+PLAY [Configure web servers] **************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [web01]
+ok: [web02]
+
+TASK [Install nginx] ***********************************************************
+ok: [web01]
+failed: [web02] => {"changed": false, "msg": "Package nginx is not available"}
+
+TASK [Start nginx service] ****************************************************
+ok: [web01]
+fatal: [web02]: FAILED! => {"changed": false, "msg": "Service nginx not found"}
+
+TASK [Deploy application] *****************************************************
+changed: [web01]
+unreachable: [web02] => {"changed": false, "msg": "Failed to connect to the host via ssh"}
+
+PLAY RECAP *********************************************************************
+web01                     : ok=4    changed=1    unreachable=0    failed=0
+web02                     : ok=1    changed=0    unreachable=1    failed=2
+
+2024-12-30 10:05:15 ERROR: Playbook execution completed with errors
+2024-12-30 10:05:16 FATAL: Critical configuration failure detected
+2024-12-30 10:05:17 INFO: Cleaning up temporary files
+2024-12-30 10:05:18 INFO: Ansible run completed 

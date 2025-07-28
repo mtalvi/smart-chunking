@@ -1,0 +1,2 @@
+# This file ensures the test_logs directory is preserved in git
+# while excluding actual log files for public sharing 
