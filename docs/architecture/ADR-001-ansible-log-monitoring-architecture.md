@@ -101,6 +101,81 @@ Ansible Logs → Smart-Chunking Detection → LLM Enhancement → Alerts/Reports
 
 **Confidence Scoring:** Weighted average with consensus requirements for high-confidence results.
 
+### 6. Troubleshooting Support Strategy: Hybrid Solution Engine
+
+**Decision:** Implement a hybrid troubleshooting support system (Option 3) that combines pattern-based solution matching with LLM-powered solution generation for unknown errors.
+
+**Architecture Flow:**
+```
+Detection Result → Pattern-Based Solutions → LLM Fallback → Actionable Steps
+      ↓                    ↓                     ↓              ↓
+   Error Data      Fast Validated Fixes    AI-Generated      User Actions
+                                           Solutions
+```
+
+**Rationale:**
+- **Fast Response:** Pattern-based solutions provide immediate, validated fixes for known errors
+- **Comprehensive Coverage:** LLM fallback ensures solutions for novel/complex errors
+- **Cost Efficiency:** Minimize LLM usage by solving common patterns locally
+- **Continuous Learning:** Automatic pattern database updates improve coverage over time
+- **Graceful Degradation:** System works offline if LLM unavailable
+
+**Key Components:**
+
+1. **Pattern-Based Solution Database:**
+   - Extends `config/patterns.yaml` with solution mappings
+   - Fast regex/keyword matching for known error patterns
+   - Validated, step-by-step troubleshooting instructions
+   - Confidence scoring for solution reliability
+
+2. **LLM Solution Generator:**
+   - Llama 3.1 integration for unknown/complex errors
+   - Contextual understanding using smart-chunking data
+   - Natural language solution generation
+   - Fallback when pattern matching fails
+
+3. **Automatic Pattern Learning:**
+   - **Critical Requirement:** After processing each log file, detect new error patterns not in the current database
+   - Generate solutions via LLM for new patterns
+   - Validate and promote successful LLM solutions to pattern database
+   - Continuous improvement of solution coverage
+
+**Solution Output Format:**
+```json
+{
+  "solutions": [
+    {
+      "title": "Check System Version Compatibility",
+      "confidence": 0.95,
+      "type": "pattern_match",
+      "steps": ["cat /etc/os-release", "Use version-specific repository"],
+      "match_type": "pattern"
+    },
+    {
+      "title": "LLM Generated Alternative", 
+      "confidence": 0.7,
+      "type": "llm_generated",
+      "description": "Based on dependency error analysis..."
+    }
+  ]
+}
+```
+
+**Automatic Pattern Database Updates:**
+- **Trigger:** After each log file processing completion
+- **Process:** 
+  1. Identify detection results with no pattern-based solutions
+  2. Generate LLM solutions for new error types
+  3. Validate solution quality and effectiveness
+  4. Add successful patterns to `config/patterns.yaml`
+  5. Commit updates to solution database
+- **Benefits:** Self-improving system, reduced LLM dependency over time
+
+**Alternatives Considered:**
+- Option 1 (LLM-only): Rejected due to processing overhead and dependency
+- Option 2 (Pattern-only): Rejected due to limited coverage of unknown errors
+- Manual pattern updates: Rejected due to maintenance overhead
+
 ## Consequences
 
 ### Positive Outcomes
@@ -158,9 +233,10 @@ Ansible Logs → Smart-Chunking Detection → LLM Enhancement → Alerts/Reports
 
 ### Phase 2: LLM Integration (Weeks 5-8)
 - Develop RCA report generation
-- Implement solution suggestion system
+- Implement hybrid solution suggestion system (pattern + LLM)
 - Create alert rule template generation
 - Build feedback loop for LLM improvement
+- Implement automatic pattern database update mechanism
 
 ### Phase 3: Production Hardening (Weeks 9-12)
 - Performance optimization and tuning
@@ -180,6 +256,9 @@ Ansible Logs → Smart-Chunking Detection → LLM Enhancement → Alerts/Reports
 - Alert Latency: <30 seconds end-to-end
 - Natural Language Parser Success Rate: >90%
 - System Availability: 99.95%
+- Solution Accuracy: >90% for pattern-based solutions
+- Pattern Database Coverage: >80% of detected errors
+- Automatic Pattern Learning Rate: 5+ new patterns per log file cycle
 
 ### Business Metrics
 - MTTR Reduction: 50% improvement
@@ -199,9 +278,11 @@ Ansible Logs → Smart-Chunking Detection → LLM Enhancement → Alerts/Reports
 - ADR-002: Data Storage and Persistence Strategy (Future)
 - ADR-003: Streaming Architecture for High-Volume Logs (Future)
 - ADR-004: Security and RBAC Implementation (Future)
+- ADR-005: Solution Validation and Feedback Framework (Future)
 
 ---
 
 **Last Updated:** July 30, 2025  
 **Next Review:** August 30, 2025  
+**Amendment:** July 30, 2025 - Added Decision #6: Hybrid Troubleshooting Support Strategy with automatic pattern database updates  
 **Stakeholders:** Development Team, SRE Team, Architecture Review Board 
