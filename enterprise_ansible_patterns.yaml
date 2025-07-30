@@ -1,0 +1,54 @@
+# Enhanced Ansible Monitoring Patterns for Enterprise
+# Add these to your config/patterns.yaml
+
+enterprise_ansible_patterns:
+  # Infrastructure provisioning failures
+  provisioning_failures:
+    - "EC2.*instance.*failed"
+    - "VPC.*creation.*failed"
+    - "Security group.*error"
+    - "Load balancer.*unreachable"
+    - "Auto scaling.*failed"
+    
+  # Authentication and connectivity
+  auth_failures:
+    - "ssh.*authentication.*failed"
+    - "permission denied"
+    - "connection refused"
+    - "timeout.*ssh"
+    - "key.*not found"
+    
+  # Service deployment issues  
+  deployment_failures:
+    - "container.*failed to start"
+    - "service.*unhealthy"
+    - "health check.*failed"
+    - "port.*already in use"
+    - "disk.*full"
+    
+  # Performance bottlenecks
+  performance_issues:
+    - "timeout.*exceeded"
+    - "memory.*limit"
+    - "cpu.*threshold"
+    - "slow.*response"
+    - "queue.*full"
+
+# Business impact mapping
+business_impact_weights:
+  provisioning_failures: 0.98  # High business impact
+  auth_failures: 0.95
+  deployment_failures: 0.90
+  performance_issues: 0.80
+
+# MTTR optimization patterns
+mttr_patterns:
+  immediate_action_required:
+    - "NO MORE HOSTS LEFT"
+    - "PLAY RECAP.*failed=[1-9]"
+    - "fatal:.*UNREACHABLE"
+  
+  investigation_needed:
+    - "FAILED - RETRYING"
+    - "WARNING.*deprecated"
+    - "changed.*false.*failed.*true"
