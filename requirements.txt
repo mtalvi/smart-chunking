@@ -1,4 +1,4 @@
-# Core dependencies
+# Core smart-chunking dependencies
 spacy>=3.7.0
 sentence-transformers>=3.0.0
 pyahocorasick>=2.0.0
@@ -9,13 +9,20 @@ transformers>=4.30.0
 numpy>=1.21.0
 tqdm>=4.65.0
 
-# Enhanced ML dependencies for new detectors
+# Enhanced ML dependencies for hybrid detection
 scikit-learn>=1.3.0
 scipy>=1.10.0
 
-# Dashboard dependencies
+# LLM integration dependencies
+requests>=2.31.0  # For Ollama API communication
+
+# Dashboard and reporting dependencies
 streamlit>=1.29.0
 flask>=2.3.0
 
-# Optional: GPU support
-# torchvision>=0.15.0  # Uncomment if using GPU 
+# Optional: GPU support for faster processing
+# torchvision>=0.15.0  # Uncomment if using GPU
+
+# External dependencies (install separately):
+# - Ollama (for local Llama 3.1 LLM): curl -fsSL https://ollama.ai/install.sh | sh
+# - spaCy language model: python -m spacy download en_core_web_sm 
