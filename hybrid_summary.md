@@ -2,6 +2,8 @@
 
 ## 🎯 THE 4 DETECTION METHODS
 
+The current weights are just the weights right now and will be modified based on training.
+
 ### 1. 📝 Pattern Detection (40% weight)
 - **What**: Regex patterns and keyword matching
 - **Strength**: Fast, reliable for known Ansible patterns
@@ -14,7 +16,7 @@
 - **Example**: Knows "SSH connection refused" = connectivity problem
 - **Your benefit**: Handles variations in wording, different verbosity levels
 
-### 3. �� Zero-Shot Classification (20% weight)
+### 3. Zero-Shot Classification (20% weight)
 - **What**: AI that can classify errors without specific training
 - **Strength**: Handles completely new error types
 - **Example**: New AWS service failures, infrastructure changes
@@ -38,9 +40,9 @@
 - More conservative, fewer false positives
 - Higher confidence in results
 
-## 💡 WHY HYBRID SOLVES YOUR "COMPLEX SCENARIOS"
+## 💡 WHY HYBRID SOLVES "COMPLEX SCENARIOS"
 
-Your challenge: "Complex scenarios complicate accurate/complete detection"
+The challenge: "Complex scenarios complicate accurate/complete detection"
 
 **Hybrid solution:**
 - ✅ **Multi-line errors**: Pattern finds trigger, Semantic understands context
@@ -49,12 +51,3 @@ Your challenge: "Complex scenarios complicate accurate/complete detection"
 - ✅ **Performance issues**: Statistical catches degradation
 - ✅ **Variable verbosity**: Semantic adapts to -v/-vv/-vvv levels
 - ✅ **False positives**: Multiple methods reduce noise
-
-## 🎯 YOUR RESULTS
-
-In your test log (job_1434747.txt):
-- **Standard Mode**: Found 2 critical errors (82% avg confidence)
-- **Consensus Mode**: Same 2 errors (high-confidence failures)
-- **Processing**: 374 lines in ~10 seconds (including ML setup)
-
-Both modes agreed = these are genuine, high-priority failures
