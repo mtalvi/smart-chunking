@@ -21,7 +21,7 @@ streamlit>=1.29.0
 flask>=2.3.0
 
 # Optional: GPU support for faster processing
-# torchvision>=0.15.0  # Uncomment if using GPU
+# torchvision>=0.15.0  # Uncomment if using GPU 
 
 # External dependencies (install separately):
 # - Ollama (for local Llama 3.1 LLM): curl -fsSL https://ollama.ai/install.sh | sh

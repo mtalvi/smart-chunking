@@ -1,8 +1,9 @@
 """
-Semantic error detector using sentence transformers for context-aware analysis.
+Fixed Semantic error detector that properly excludes timing and execution flow logs.
 """
 
 import numpy as np
+import re
 from typing import Optional, List, Dict
 from functools import lru_cache
 import yaml
@@ -21,15 +22,15 @@ from ..models.results import DetectionResult
 
 
 class SemanticDetector(BaseDetector):
-    """Semantic detector using sentence transformers for NLP-based error detection."""
+    """Fixed semantic detector that properly excludes timing and operational logs."""
     
-    def __init__(self, confidence_threshold: float = 0.7, config_path: Optional[str] = None,
+    def __init__(self, confidence_threshold: float = 0.75, config_path: Optional[str] = None,
                  model_name: str = 'all-MiniLM-L6-v2'):
         """
         Initialize the semantic detector.
         
         Args:
-            confidence_threshold: Minimum confidence score for detection
+            confidence_threshold: Minimum confidence score for detection (raised to 0.75)
             config_path: Path to patterns configuration file
             model_name: Name of the sentence transformer model to use
         """
@@ -48,6 +49,10 @@ class SemanticDetector(BaseDetector):
         # Initialize the sentence transformer model
         self.model_name = model_name
         self.model = None
+        
+        # Compile exclusion patterns with enhanced timing patterns
+        self.exclusion_patterns = self._compile_exclusion_patterns()
+        self.success_patterns = self._compile_success_patterns()
         self.error_embeddings = None
         self.error_phrases = []
         
@@ -74,29 +79,182 @@ class SemanticDetector(BaseDetector):
             return self._get_default_config()
     
     def _get_default_config(self) -> Dict:
-        """Get default configuration if file loading fails."""
+        """Get default configuration focused on actual errors."""
         return {
             'semantic_phrases': {
                 'error_phrases': [
-                    "task execution failed",
-                    "playbook execution error",
+                    # Connection and infrastructure failures
                     "connection could not be established",
+                    "ssh connection refused",
+                    "host became unreachable", 
+                    "timeout waiting for response",
+                    "failed to connect to the host via ssh",
+                    
+                    # Authentication and permission issues
                     "authentication failed",
                     "permission denied",
+                    "access denied",
+                    "unauthorized access",
+                    
+                    # File and system errors
                     "file not found",
+                    "no such file or directory",
                     "module not found",
+                    "command not found",
+                    
+                    # Configuration and syntax errors
                     "syntax error in playbook",
                     "variable not defined",
+                    "configuration validation error",
                     "template rendering failed",
-                    "host became unreachable",
-                    "timeout waiting for response",
-                    "certificate verification failed",
+                    
+                    # Service and package failures
                     "package installation failed",
                     "service startup failed",
-                    "configuration validation error"
+                    "dependency resolution failed",
+                    
+                    # Critical assertion failures (from real logs)
+                    "cluster admin must be created",
+                    "assertion evaluation failed",
+                    "all assertions failed"
                 ]
             }
         }
+    
+    def _compile_exclusion_patterns(self) -> List[re.Pattern]:
+        """Compile exclusion patterns to aggressively filter out timing and operational logs."""
+        exclusions = []
+        
+        # Hardcoded timing patterns that are NEVER errors
+        timing_patterns = [
+            # Task timing summaries (your main issue)
+            r".*---- \d+\.\d+s$",              # "Launch CloudFormation template ---- 158.02s"
+            r".*-{10,} \d+\.\d+s$",            # Multiple dashes with timing
+            r".* : .* -{4,} \d+\.\d+s$",       # Role-based timing
+            r".*\d+\.\d+s \*+$",               # Task timing with asterisks
+            r".*===+ \d+\.\d+s$",              # Timing separators
+            
+            # Task headers and operational flow
+            r"^TASK \[.*\] \*+$",              # All task headers
+            r"^PLAY \[.*\] \*+$",              # Play headers  
+            r"^Run [a-zA-Z]+ [a-zA-Z]+",       # "Run terraform init"
+            r"^Wait for .* completion",        # "Wait for ROSA completion"
+            r"^Install .*",                    # "Install Helm"
+            r"^Create .*",                     # "Create SSH key"
+            r"^Save .*",                       # "Save Terraform directory"
+            r"^Transfer .*",                   # "Transfer terraform directory"
+            r"^Get .*",                        # "Get created subnets"
+            r"^Print .*",                      # "Print subnets and OIDC ID"
+            
+            # Status and informational messages
+            r"TASKS RECAP \*+",
+            r"===============================================================================",
+            r"Friday.*\d{4}.*\+\d{4}.*\*+",   # Timestamp lines
+            
+            # Successful operations
+            r"ok: \[.*\]",
+            r"changed: \[.*\]", 
+            r"skipping: \[.*\]",
+            r"included: .*",
+            
+            # Retry operations that are still active (not final failures)
+            r"FAILED - RETRYING:.*\([2-9]\d* retries left\)",  # Still has retries
+            r"FAILED - RETRYING:.*\(1[0-9]+ retries left\)",   # 10+ retries left
+            
+            # Common non-error patterns
+            r"# .*",                           # Comments
+            r"debug.*",                        # Debug messages
+            r"info.*",                         # Info messages
+            r"trace.*",                        # Trace messages
+        ]
+        
+        # Add timing patterns
+        for pattern in timing_patterns:
+            try:
+                exclusions.append(re.compile(pattern, re.IGNORECASE))
+            except re.error as e:
+                print(f"Warning: Invalid timing exclusion pattern '{pattern}': {e}")
+        
+        # Load exclusion patterns from config
+        exclusion_config = self.config.get('exclusions', {})
+        exclusion_categories = [
+            'execution_flow',
+            'active_operations', 
+            'task_metadata',
+            'expected_warnings',
+            'success_patterns'
+        ]
+        
+        for category in exclusion_categories:
+            patterns = exclusion_config.get(category, [])
+            for pattern in patterns:
+                try:
+                    exclusions.append(re.compile(pattern, re.IGNORECASE))
+                except re.error as e:
+                    print(f"Warning: Invalid exclusion pattern '{pattern}' in {category}: {e}")
+        
+        return exclusions
+    
+    def _compile_success_patterns(self) -> List[re.Pattern]:
+        """Compile patterns that indicate successful operations."""
+        success_patterns = [
+            re.compile(r"successfully", re.IGNORECASE),
+            re.compile(r"completed", re.IGNORECASE),
+            re.compile(r"finished", re.IGNORECASE),
+            re.compile(r"done", re.IGNORECASE),
+            re.compile(r"ok:", re.IGNORECASE),
+            re.compile(r"passed", re.IGNORECASE),
+        ]
+        return success_patterns
+    
+    def should_detect(self, line: str) -> bool:
+        """Enhanced preprocessing filter to aggressively exclude non-errors."""
+        line_clean = line.strip()
+        
+        # Skip empty lines
+        if not line_clean:
+            return False
+        
+        # Skip very short lines (less than 3 words)
+        if len(line_clean.split()) < 3:
+            return False
+        
+        # CRITICAL: Check for exclusion patterns first (your main fix!)
+        for exclusion in self.exclusion_patterns:
+            if exclusion.search(line_clean):
+                return False
+        
+        # Skip lines that are clearly successful operations
+        for success_pattern in self.success_patterns:
+            if success_pattern.search(line_clean):
+                return False
+        
+        # Skip lines with timing information (additional safety net)
+        if re.search(r'\d+\.\d+s(\s|\*|$)', line_clean):
+            return False
+        
+        # Skip obvious task operation lines
+        task_operations = [
+            'run ', 'install ', 'create ', 'save ', 'get ', 'transfer ',
+            'wait for ', 'print ', 'copy ', 'update ', 'set ', 'check '
+        ]
+        line_lower = line_clean.lower()
+        for op in task_operations:
+            if line_lower.startswith(op) and not any(error_word in line_lower 
+                                                   for error_word in ['failed', 'error', 'exception', 'denied']):
+                return False
+        
+        # Must contain at least one potential error indicator to proceed (expanded list)
+        error_indicators = [
+            'fail', 'error', 'exception', 'denied', 'refused', 'timeout',
+            'unreachable', 'fatal', 'critical', 'abort', 'panic',
+            'warning', 'deprecated', 'unsafe'  # Added to catch warnings
+        ]
+        
+        if not any(indicator in line_lower for indicator in error_indicators):
+            return False
+        
+        return True
     
     def _precompute_error_embeddings(self) -> None:
         """Pre-compute embeddings for error phrases."""
@@ -104,7 +262,7 @@ class SemanticDetector(BaseDetector):
         
         if not self.error_phrases:
             print("Warning: No error phrases found in configuration")
-            return
+            self.error_phrases = self._get_default_config()['semantic_phrases']['error_phrases']
         
         print(f"Pre-computing embeddings for {len(self.error_phrases)} error phrases...")
         self.error_embeddings = self.model.encode(self.error_phrases, convert_to_numpy=True)
@@ -131,37 +289,9 @@ class SemanticDetector(BaseDetector):
         
         return embedding
     
-    def should_detect(self, line: str) -> bool:
-        """Quick preprocessing filter."""
-        line_clean = line.strip().lower()
-        
-        # Skip empty lines
-        if not line_clean:
-            return False
-        
-        # Skip very short lines (less than 3 words)
-        if len(line_clean.split()) < 3:
-            return False
-        
-        # Skip obvious non-error lines
-        skip_patterns = ['info:', 'debug:', 'trace:', '# ', 'changed:', 'ok:']
-        for pattern in skip_patterns:
-            if line_clean.startswith(pattern):
-                return False
-        
-        return True
-    
     def detect(self, line: str, line_number: int, file_path: str) -> Optional[DetectionResult]:
         """
-        Detect errors using semantic similarity.
-        
-        Args:
-            line: The log line to analyze
-            line_number: Line number in the file (1-indexed)
-            file_path: Path to the file being analyzed
-            
-        Returns:
-            DetectionResult if an error is detected, None otherwise
+        Detect errors using semantic similarity with enhanced filtering.
         """
         if not self.should_detect(line):
             return None
@@ -189,15 +319,7 @@ class SemanticDetector(BaseDetector):
     
     @lru_cache(maxsize=1000)
     def get_confidence(self, line: str) -> float:
-        """
-        Calculate confidence score using semantic similarity.
-        
-        Args:
-            line: The log line to analyze
-            
-        Returns:
-            Confidence score between 0.0 and 1.0
-        """
+        """Calculate confidence score using semantic similarity with stricter thresholds."""
         if self.model is None or self.error_embeddings is None:
             return 0.0
         
@@ -208,12 +330,12 @@ class SemanticDetector(BaseDetector):
             # Calculate cosine similarities with all error phrases
             similarities = cosine_similarity([line_embedding], self.error_embeddings)[0]
             
-            # Return the maximum similarity as confidence
+            # Get the maximum similarity
             max_similarity = float(np.max(similarities))
             
-            # Apply a sigmoid-like transformation to make the threshold more meaningful
-            # This helps distinguish between similar and very similar phrases
-            confidence = 1 / (1 + np.exp(-10 * (max_similarity - 0.5)))
+            # Apply stricter sigmoid transformation to reduce false positives
+            # Require higher base similarity (0.6 instead of 0.5)
+            confidence = 1 / (1 + np.exp(-12 * (max_similarity - 0.6)))
             
             return min(confidence, 1.0)
             
@@ -223,105 +345,56 @@ class SemanticDetector(BaseDetector):
     
     @lru_cache(maxsize=1000)
     def get_error_type(self, line: str) -> str:
-        """
-        Determine the type of error based on most similar phrase.
-        
-        Args:
-            line: The log line to analyze
-            
-        Returns:
-            String describing the error type
-        """
+        """Determine the type of error based on most similar phrase."""
         if self.model is None or self.error_embeddings is None:
             return "semantic_error"
         
         try:
-            # Get embedding for the line
             line_embedding = self._get_line_embedding(line)
-            
-            # Calculate cosine similarities
             similarities = cosine_similarity([line_embedding], self.error_embeddings)[0]
             
             # Find the most similar error phrase
             best_match_idx = np.argmax(similarities)
             best_phrase = self.error_phrases[best_match_idx]
             
-            # Map phrase to error type category
-            error_type_mapping = {
-                'connection': ['connection', 'unreachable', 'timeout', 'ssh'],
-                'authentication': ['authentication', 'permission', 'denied'],
-                'file_system': ['file not found', 'permission denied'],
-                'execution': ['execution', 'failed', 'error'],
-                'configuration': ['configuration', 'validation', 'syntax'],
-                'service': ['service', 'startup', 'package'],
-                'template': ['template', 'rendering', 'variable']
-            }
-            
-            # Categorize based on keywords in the best matching phrase
-            best_phrase_lower = best_phrase.lower()
-            for category, keywords in error_type_mapping.items():
-                if any(keyword in best_phrase_lower for keyword in keywords):
-                    return f"semantic_{category}"
-            
-            return "semantic_error"
+            return self._categorize_error_phrase(best_phrase)
             
         except Exception as e:
             print(f"Error determining semantic error type: {e}")
             return "semantic_error"
     
-    def get_most_similar_phrases(self, line: str, top_k: int = 3) -> List[tuple]:
-        """
-        Get the most similar error phrases for a line.
+    def _categorize_error_phrase(self, phrase: str) -> str:
+        """Helper method to categorize error phrases."""
+        phrase_lower = phrase.lower()
         
-        Args:
-            line: The log line to analyze
-            top_k: Number of top similar phrases to return
-            
-        Returns:
-            List of (phrase, similarity_score) tuples
-        """
-        if self.model is None or self.error_embeddings is None:
-            return []
-        
-        try:
-            line_embedding = self._get_line_embedding(line)
-            similarities = cosine_similarity([line_embedding], self.error_embeddings)[0]
-            
-            # Get top-k most similar phrases
-            top_indices = np.argsort(similarities)[-top_k:][::-1]
-            
-            results = []
-            for idx in top_indices:
-                phrase = self.error_phrases[idx]
-                similarity = float(similarities[idx])
-                results.append((phrase, similarity))
-            
-            return results
-            
-        except Exception as e:
-            print(f"Error getting similar phrases: {e}")
-            return []
+        if any(word in phrase_lower for word in ['connection', 'unreachable', 'timeout', 'ssh']):
+            return "semantic_connection"
+        elif any(word in phrase_lower for word in ['authentication', 'permission', 'denied', 'access']):
+            return "semantic_authentication"
+        elif any(word in phrase_lower for word in ['file', 'not found', 'directory']):
+            return "semantic_file_system"
+        elif any(word in phrase_lower for word in ['syntax', 'template', 'variable', 'configuration']):
+            return "semantic_configuration"
+        elif any(word in phrase_lower for word in ['service', 'package', 'installation', 'dependency']):
+            return "semantic_service"
+        elif any(word in phrase_lower for word in ['assertion', 'cluster', 'admin']):
+            return "semantic_assertion"
+        else:
+            return "semantic_execution"
     
     def batch_detect(self, lines: List[tuple], file_path: str) -> List[DetectionResult]:
-        """
-        Optimized batch detection for multiple lines.
-        
-        Args:
-            lines: List of (line_content, line_number) tuples
-            file_path: Path to the file being analyzed
-            
-        Returns:
-            List of DetectionResult objects
-        """
+        """Optimized batch detection with better filtering."""
         if self.model is None:
             self.setup()
         
-        # Filter lines that should be processed
+        # Apply stricter filtering
         filtered_lines = [(line, line_num) for line, line_num in lines 
                          if self.should_detect(line)]
         
         if not filtered_lines:
             return []
+        
+        print(f"Semantic detector: Processing {len(filtered_lines)} lines out of {len(lines)} total")
         
         try:
             # Batch encode all lines at once for efficiency
@@ -334,7 +407,9 @@ class SemanticDetector(BaseDetector):
             results = []
             for i, (line, line_number) in enumerate(filtered_lines):
                 max_similarity = float(np.max(similarities_batch[i]))
-                confidence = 1 / (1 + np.exp(-10 * (max_similarity - 0.5)))
+                
+                # Apply stricter confidence calculation
+                confidence = 1 / (1 + np.exp(-12 * (max_similarity - 0.6)))
                 confidence = min(confidence, 1.0)
                 
                 if confidence >= self.confidence_threshold:
@@ -353,33 +428,12 @@ class SemanticDetector(BaseDetector):
                     )
                     results.append(result)
             
+            print(f"Semantic detector: Found {len(results)} potential errors")
             return results
             
         except Exception as e:
             print(f"Error in batch detection: {e}")
-            # Fallback to individual detection
-            return super().batch_detect(filtered_lines, file_path)
-    
-    def _categorize_error_phrase(self, phrase: str) -> str:
-        """Helper method to categorize error phrases."""
-        phrase_lower = phrase.lower()
-        
-        if any(word in phrase_lower for word in ['connection', 'unreachable', 'timeout', 'ssh']):
-            return "semantic_connection"
-        elif any(word in phrase_lower for word in ['authentication', 'permission', 'denied']):
-            return "semantic_authentication"
-        elif any(word in phrase_lower for word in ['file', 'not found']):
-            return "semantic_file_system"
-        elif any(word in phrase_lower for word in ['execution', 'failed', 'error']):
-            return "semantic_execution"
-        elif any(word in phrase_lower for word in ['configuration', 'validation', 'syntax']):
-            return "semantic_configuration"
-        elif any(word in phrase_lower for word in ['service', 'startup', 'package']):
-            return "semantic_service"
-        elif any(word in phrase_lower for word in ['template', 'rendering', 'variable']):
-            return "semantic_template"
-        else:
-            return "semantic_error"
+            return []
     
     def cleanup(self) -> None:
         """Cleanup method to free memory."""
@@ -395,5 +449,6 @@ class SemanticDetector(BaseDetector):
             'model_name': self.model_name,
             'error_phrases_count': len(self.error_phrases) if self.error_phrases else 0,
             'cache_size': len(self._embedding_cache) if hasattr(self, '_embedding_cache') else 0,
-            'model_loaded': self.model is not None
+            'model_loaded': self.model is not None,
+            'exclusion_patterns_count': len(self.exclusion_patterns)
         } 

@@ -72,7 +72,8 @@ class PatternDetector(BaseDetector):
                 'error_patterns': 0.80,
                 'unreachable_patterns': 0.90,
                 'exception_patterns': 0.85,
-                'failure_patterns': 0.75
+                'failure_patterns': 0.75,
+                'warning_patterns': 0.75
             }
         }
     
@@ -95,6 +96,13 @@ class PatternDetector(BaseDetector):
                     automaton.add_word(pattern.lower(), (pattern_id, category, pattern))
                     pattern_id += 1
         
+        # Add warning patterns that we were missing!
+        for pattern in self.config.get('ansible_patterns', {}).get('warning_patterns', []):
+            # Skip regex patterns for automaton  
+            if not self._is_regex_pattern(pattern):
+                automaton.add_word(pattern.lower(), (pattern_id, 'warning_patterns', pattern))
+                pattern_id += 1
+        
         # Build the automaton
         automaton.make_automaton()
         return automaton
@@ -116,17 +124,38 @@ class PatternDetector(BaseDetector):
                 except re.error as e:
                     print(f"Warning: Invalid regex pattern '{pattern}': {e}")
         
+        # Add warning regex patterns that were skipped from automaton
+        for pattern in self.config.get('ansible_patterns', {}).get('warning_patterns', []):
+            if self._is_regex_pattern(pattern):
+                try:
+                    compiled_regex = re.compile(pattern, re.IGNORECASE | re.MULTILINE)
+                    compiled_patterns.append((compiled_regex, 'warning_patterns', pattern))
+                except re.error as e:
+                    print(f"Warning: Invalid warning regex pattern '{pattern}': {e}")
+        
         return compiled_patterns
     
     def _compile_exclusion_patterns(self) -> List[re.Pattern]:
         """Compile exclusion patterns to reduce false positives."""
         exclusions = []
         
-        for pattern in self.config.get('exclusions', {}).get('false_positives', []):
-            try:
-                exclusions.append(re.compile(pattern, re.IGNORECASE))
-            except re.error as e:
-                print(f"Warning: Invalid exclusion pattern '{pattern}': {e}")
+        # Load all exclusion categories from the new config structure
+        exclusion_config = self.config.get('exclusions', {})
+        exclusion_categories = [
+            'execution_flow',
+            'active_operations', 
+            'task_metadata',
+            'expected_warnings',
+            'success_patterns'
+        ]
+        
+        for category in exclusion_categories:
+            patterns = exclusion_config.get(category, [])
+            for pattern in patterns:
+                try:
+                    exclusions.append(re.compile(pattern, re.IGNORECASE))
+                except re.error as e:
+                    print(f"Warning: Invalid exclusion pattern '{pattern}' in {category}: {e}")
         
         return exclusions
     
@@ -147,8 +176,9 @@ class PatternDetector(BaseDetector):
             if exclusion.search(line):
                 return False
         
-        # Quick check for any error-related keywords
-        error_keywords = ['error', 'fail', 'fatal', 'exception', 'unreachable', 'abort']
+        # Quick check for any error-related keywords (expanded to include warnings)
+        error_keywords = ['error', 'fail', 'fatal', 'exception', 'unreachable', 'abort', 
+                         'warning', 'deprecated', 'ignoring']
         return any(keyword in line_lower for keyword in error_keywords)
     
     def detect(self, line: str, line_number: int, file_path: str) -> Optional[DetectionResult]:
@@ -242,6 +272,7 @@ class PatternDetector(BaseDetector):
         priority_order = [
             'fatal_patterns', 'failed_patterns', 'unreachable_patterns',
             'exception_patterns', 'error_patterns', 'failure_patterns',
+            'warning_patterns',  # Added warning patterns to priority order
             'task_status', 'play_recap_errors', 'connection_errors',
             'python_traceback', 'java_stacktrace', 'generic_errors'
         ]

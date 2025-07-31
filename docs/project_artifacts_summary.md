@@ -44,9 +44,9 @@
    - End-to-end functionality verification
 
 7. **[../llama_smart_chunking_integration.py](../llama_smart_chunking_integration.py)**
-   - Complete integration example
-   - Smart-chunking + LLM enhancement demo
-   - Production-ready code patterns
+    - Complete integration example
+    - Smart-chunking + LLM enhancement demo
+    - Production-ready code patterns
 
 ## 🔄 **Data Models & Core System**
 - **[../src/models/](../src/models/)** - Created data model package

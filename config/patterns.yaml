@@ -64,6 +64,15 @@ ansible_patterns:
     - "NO MORE HOSTS LEFT"
     - "PLAY RECAP.*failed=[1-9]"
     - "PLAY RECAP.*unreachable=[1-9]"
+  
+  # Ansible warning patterns
+  warning_patterns:
+    - "\\[WARNING\\]:"
+    - "\\[DEPRECATION WARNING\\]:"
+    - "Could not match supplied host pattern"
+    - "key_name is DEPRECATED"
+    - "ignoring"
+    - "...ignoring"
 
 # General programming error patterns
 programming_patterns:
@@ -140,6 +149,8 @@ pattern_weights:
   return_codes: 0.80
   connection_errors: 0.90
   assertion_failures: 0.95
+  warning_patterns: 0.75  # High enough to pass hybrid threshold
+  deprecation_warnings: 0.75  # High enough to pass hybrid threshold
 
 # Enhanced semantic similarity phrases based on real log analysis
 semantic_phrases:
@@ -171,55 +182,50 @@ semantic_phrases:
     - "cloudformation template failed"
     - "terraform apply failed"
 
-# Comprehensive exclusion patterns based on log analysis
+# Enhanced exclusion patterns based on real log analysis
 exclusions:
-  # Common false positives - Significantly enhanced
-  false_positives:
-    - "# ERROR"  # Comments
-    - "debug.*error"  # Debug messages
-    - "echo.*error"  # Echo statements
-    - "print.*error"  # Print statements
-    - "log.*error"  # Logging messages that aren't actual errors
-    - "Fail if.*"  # Test names or conditional statements with "Fail if"
-    - "Test.*fail.*"  # Test descriptions containing "fail"
-    - "Should fail.*"  # Expected failure test cases
-    - ".*will fail if.*"  # Conditional statements about potential failures
-    - ".*failed=0.*"  # PLAY RECAP with zero failures
-    - ".*unreachable=0.*"  # PLAY RECAP with zero unreachable
-    - ".*Abort if.*"
-    - ".*TASK \\[.*error.*"  # Task names containing error
-    - ".*TASK \\[.*failed.*"  # Task names containing failed
-    - ".*TASK \\[.*unreachable.*"  # Task names containing unreachable
-    - ".*TASK \\[.*fatal.*"  # Task names containing fatal
-    - ".*TASK \\[.*exception.*"  # Task names containing exception
-    - ".*TASK \\[.*failure.*"  # Task names containing failure
-    - ".*\\.\\.\\.ignoring"  # Intentionally ignored failures
-    - "\\[DEPRECATION WARNING\\]:"  # Deprecation warnings
-    - "DeprecationWarning:"  # Python deprecation warnings
-    - "CryptographyDeprecationWarning:"  # Cryptography warnings
-    - "ok: \\[.*\\]"  # Successful task completions
-    - "changed: \\[.*\\]"  # Successful changes
-    - "skipping: \\[.*\\]"  # Skipped tasks
-    - "included: .*"  # Included files/tasks
-    - "WARNING: key_name is DEPRECATED"  # Specific known warning
-    - "/usr/local/lib/python.*DeprecationWarning"  # Python library warnings
-
-  # Success indicators that should never be errors
-  success_indicators:
-    - "ok:"
-    - "changed:"
-    - "skipping:"
-    - "included:"
+  # Timing and execution flow (NOT ERRORS) - Enhanced to catch semantic false positives
+  execution_flow:
+    - ".*\\d+\\.\\d+s \\*+$"  # Task timing
+    - ".*===+ \\d+\\.\\d+s$"  # Timing separators  
+    - "TASKS RECAP \\*+"
+    - "Friday.*\\d{4}.*\\+\\d{4}.*\\*+"  # Timestamp lines
+    - "==============================================================================="
+    # CRITICAL: Exclude timing summaries that semantic detector mistakes for errors
+    - ".*---- \\d+\\.\\d+s$"    # "Launch CloudFormation template (local) ---- 158.02s"
+    - ".*-{10,} \\d+\\.\\d+s$"  # Multiple dashes with timing
+    - ".* : .* -{4,} \\d+\\.\\d+s$"  # Role-based timing summaries
+    
+  # Active operations (NOT FAILURES) - More lenient with retries
+  active_operations:
+    - "ok: \\[.*\\]"
+    - "changed: \\[.*\\]"
+    - "skipping: \\[.*\\]"
+    - "included: .*"
+    # Allow retries to be detected and aggregated, only exclude very fresh retries
+    - "FAILED - RETRYING:.*\\(1[2-9][0-9]+ retries left\\)"  # 120+ retries (very fresh)
+    
+  # Task headers and descriptions (NOT ERRORS)
+  task_metadata:
+    - "^TASK \\[.*\\] \\*+$"  # All task headers
+    - "^PLAY \\[.*\\] \\*+$"  # Play headers
+    - "Run [a-zA-Z]+ [a-zA-Z]+"  # "Run terraform init"
+    - "Wait for .* completion"   # "Wait for ROSA completion"
+    - "Install .*"               # "Install Helm"
+    - "Create .*"                # "Create SSH key"
+    
+  # Expected warnings that are still worth detecting (REMOVED most exclusions)
+  expected_warnings:
+    - "skipping installation of.*already installed"  # Only exclude routine installation skips
+    
+  # Success indicators
+  success_patterns:
     - "All assertions passed"
     - "PLAY RECAP.*failed=0.*unreachable=0"
+    - "successfully"
+    - "completed successfully"
 
-  # File extensions to ignore
-  ignore_extensions:
-    - ".bak"
-    - ".tmp"
-    - ".swp"
-    - ".log.gz"
-    - ".binary"
+
 
 # Context extraction settings
 context:
@@ -238,3 +244,181 @@ sensitivity:
   low:
     confidence_threshold: 0.5
     pattern_match_threshold: 0.6 
+
+# Enhanced solution database for hybrid troubleshooting support (ADR-001 Decision #6)
+# This section maps error patterns to actionable troubleshooting steps
+ansible_solutions:
+  # ROSA/OpenShift Administration Issues
+  rosa_admin_missing:
+    patterns:
+      - "cluster admin must be created"
+      - "rosa_setup_cluster_admin.*false"
+      - "assertion.*cluster.*admin"
+    solutions:
+      - title: "Create ROSA Cluster Admin User"
+        confidence: 0.95
+        steps:
+          - "rosa create admin --cluster=cluster_name --password"
+          - "Save admin credentials securely"
+          - "oc login https://api.cluster.com --username cluster-admin"
+          - "Verify access: oc whoami && oc get nodes"
+        category: "rosa_administration"
+        estimated_fix_time: "5-10 minutes"
+  # SSH/Connection Issues
+  ssh_unreachable:
+    patterns: 
+      - "UNREACHABLE!"
+      - "ssh.*authentication.*failed"
+      - "Connection refused"
+      - "Failed to connect to the host via ssh"
+      - "ssh.*connection.*failed"
+    solutions:
+      - title: "Verify SSH Key Configuration"
+        confidence: 0.9
+        steps:
+          - "Test SSH connection manually: ssh -i ~/.ssh/key user@host"
+          - "Check AWX/AAP credentials for correct SSH key path"
+          - "Verify SSH key permissions: chmod 600 ~/.ssh/key"
+          - "Ensure SSH key is added to target host authorized_keys"
+        category: "ssh_connectivity"
+        estimated_fix_time: "5-10 minutes"
+      - title: "Network Connectivity Check"
+        confidence: 0.8
+        steps:
+          - "Test network connectivity: ping target_host"
+          - "Check firewall rules on both source and target"
+          - "Verify SSH service is running: systemctl status sshd"
+          - "Check DNS resolution: nslookup target_host"
+        category: "network_connectivity"
+        estimated_fix_time: "10-15 minutes"
+
+  # Package Management Issues
+  package_dependency:
+    patterns:
+      - "nothing provides.*needed by"
+      - "Depsolve Error"
+      - "conflicting requests"
+      - "dependency.*failed"
+      - "No package.*available"
+    solutions:
+      - title: "Check System Version Compatibility"
+        confidence: 0.95
+        steps:
+          - "Check OS version: cat /etc/os-release"
+          - "Verify repository compatibility with OS version"
+          - "Use version-specific package repository"
+          - "Example: sudo rpm -Uvh https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm"
+        category: "package_management"
+        estimated_fix_time: "5-15 minutes"
+      - title: "Repository Configuration Check"
+        confidence: 0.8
+        steps:
+          - "List enabled repositories: dnf repolist"
+          - "Clean repository cache: dnf clean all"
+          - "Rebuild repository metadata: dnf makecache"
+          - "Check repository GPG keys: rpm -qa gpg-pubkey*"
+        category: "repository_management"
+        estimated_fix_time: "10-20 minutes"
+
+  # Permission/Access Issues
+  permission_denied:
+    patterns:
+      - "permission denied"
+      - "insufficient.*privilege"
+      - "Access.*denied"
+      - "Operation not permitted"
+      - "Permission refused"
+    solutions:
+      - title: "Check User Permissions and Sudo Access"
+        confidence: 0.9
+        steps:
+          - "Check current user: whoami"
+          - "Verify sudo permissions: sudo -l"
+          - "Check file/directory permissions: ls -la target_path"
+          - "Review group membership: groups username"
+        category: "permissions"
+        estimated_fix_time: "5-10 minutes"
+      - title: "SELinux/AppArmor Policy Check"
+        confidence: 0.7
+        steps:
+          - "Check SELinux status: sestatus"
+          - "Review SELinux denials: ausearch -m AVC -ts recent"
+          - "Check AppArmor status: apparmor_status"
+          - "Review file contexts: ls -Z target_path"
+        category: "security_policy"
+        estimated_fix_time: "15-30 minutes"
+
+  # Service/Process Issues
+  service_failure:
+    patterns:
+      - "service.*failed"
+      - "systemctl.*failed"
+      - "process.*not.*running"
+      - "Unit.*failed.*start"
+      - "Job.*failed"
+    solutions:
+      - title: "Service Status and Configuration Check"
+        confidence: 0.9
+        steps:
+          - "Check service status: systemctl status service_name"
+          - "View service logs: journalctl -u service_name -n 50"
+          - "Check service configuration: systemctl cat service_name"
+          - "Verify service dependencies: systemctl list-dependencies service_name"
+        category: "service_management"
+        estimated_fix_time: "10-20 minutes"
+      - title: "System Resources and Health Check"
+        confidence: 0.8
+        steps:
+          - "Check system load: uptime"
+          - "Check memory usage: free -h"
+          - "Check disk space: df -h"
+          - "Review system logs: journalctl -xe"
+        category: "system_health"
+        estimated_fix_time: "10-15 minutes"
+
+  # File/Directory Issues
+  file_not_found:
+    patterns:
+      - "No such file or directory"
+      - "cannot find.*file"
+      - "File.*not.*found"
+      - "Path.*does not exist"
+    solutions:
+      - title: "Verify File Path and Existence"
+        confidence: 0.9
+        steps:
+          - "Check if file exists: ls -la full_path"
+          - "Search for file in common locations: find / -name filename 2>/dev/null"
+          - "Verify working directory: pwd"
+          - "Check file permissions and ownership: ls -la dirname/"
+        category: "file_system"
+        estimated_fix_time: "5-10 minutes"
+
+  # Module/Task Execution Issues
+  module_failure:
+    patterns:
+      - "module.*failed"
+      - "task.*failed"
+      - "command.*not found"
+      - "executable.*not found"
+    solutions:
+      - title: "Module and Command Availability Check"
+        confidence: 0.85
+        steps:
+          - "Verify command exists: which command_name"
+          - "Check PATH environment: echo $PATH"
+          - "Install missing package: dnf install package_name"
+          - "Verify Ansible module availability: ansible-doc module_name"
+        category: "module_execution"
+        estimated_fix_time: "10-15 minutes"
+
+# Solution matching configuration
+solution_matching:
+  # Use regex matching for patterns
+  use_regex: true
+  # Minimum confidence threshold for solutions
+  min_confidence: 0.6
+  # Maximum number of solutions to return
+  max_solutions: 3
+  # Prefer higher confidence solutions
+  sort_by_confidence: true 

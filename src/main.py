@@ -512,6 +512,56 @@ Examples:
             if original_count != dedup_count:
                 logger.info(f"Deduplicated {original_count - dedup_count} similar results")
         
+        # Apply retry aggregation to reduce noise from multiple RETRYING lines
+        if results.results:
+            try:
+                logger.info("Aggregating retry patterns...")
+                from .processors import RetryAggregator
+                retry_aggregator = RetryAggregator(min_retries=3)
+                results = retry_aggregator.aggregate_retries(results)
+                logger.info("Retry aggregation completed")
+            except Exception as e:
+                logger.warning(f"Error during retry aggregation: {e}")
+                if args.verbose:
+                    import traceback
+                    traceback.print_exc()
+        
+        # Generate troubleshooting solutions for detected errors
+        if results.results:
+            try:
+                logger.info("Generating troubleshooting solutions...")
+                from .solutions import HybridSolutionEngine
+                solution_engine = HybridSolutionEngine()
+                
+                # Generate solutions for each detection result
+                enhanced_results = []
+                for result in results.results:
+                    # Convert DetectionResult to dict for solution engine
+                    detection_dict = {
+                        'original_line': result.original_line,
+                        'error_type': result.error_type,
+                        'confidence': result.confidence,
+                        'matched_patterns': result.matched_patterns,
+                        'detector_name': result.detector_name
+                    }
+                    
+                    solutions = solution_engine.find_solutions(detection_dict)
+                    
+                    # Add solutions to the result
+                    result.solutions = solutions
+                    result.solution_source = "hybrid" if solutions else "none"
+                    enhanced_results.append(result)
+                
+                results.results = enhanced_results
+                solution_count = sum(1 for r in results.results if r.solutions)
+                logger.info(f"Generated solutions for {solution_count}/{len(results.results)} errors")
+                
+            except Exception as e:
+                logger.warning(f"Error during solution generation: {e}")
+                if args.verbose:
+                    import traceback
+                    traceback.print_exc()
+        
         # Apply ML-based clustering if enabled
         if args.enable_clustering and results.results and CLUSTERING_AVAILABLE:
             try:
