@@ -15,7 +15,7 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     print("Warning: scikit-learn not available. Error clustering disabled.")
 
-from ..models.results import DetectionResult, AnalysisResults
+from src.models.results import DetectionResult, AnalysisResults
 
 
 class ErrorClusterer:

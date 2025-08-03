@@ -16,25 +16,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from .detectors import PatternDetector, SemanticDetector, HybridDetector
-from .processors import StreamProcessor, ContextExtractor
-from .models.results import AnalysisResults
+from src.detectors import PatternDetector, SemanticDetector, HybridDetector
+from src.processors import StreamProcessor, ContextExtractor
+from src.models.results import AnalysisResults
 
 # Import new ML detectors with fallback handling
 try:
-    from .detectors.zeroshot import ZeroShotErrorClassifier
+    from src.detectors.zeroshot import ZeroShotErrorClassifier
     ZEROSHOT_AVAILABLE = True
 except ImportError:
     ZEROSHOT_AVAILABLE = False
 
 try:
-    from .detectors.statistical import StatisticalAnomalyDetector
+    from src.detectors.statistical import StatisticalAnomalyDetector
     STATISTICAL_AVAILABLE = True
 except ImportError:
     STATISTICAL_AVAILABLE = False
 
 try:
-    from .processors.clusterer import ErrorClusterer
+    from src.processors.clusterer import ErrorClusterer
     CLUSTERING_AVAILABLE = True
 except ImportError:
     CLUSTERING_AVAILABLE = False
@@ -516,7 +516,7 @@ Examples:
         if results.results:
             try:
                 logger.info("Aggregating retry patterns...")
-                from .processors import RetryAggregator
+                from src.processors import RetryAggregator
                 retry_aggregator = RetryAggregator(min_retries=3)
                 results = retry_aggregator.aggregate_retries(results)
                 logger.info("Retry aggregation completed")
@@ -530,7 +530,7 @@ Examples:
         if results.results:
             try:
                 logger.info("Generating troubleshooting solutions...")
-                from .solutions import HybridSolutionEngine
+                from src.solutions import HybridSolutionEngine
                 solution_engine = HybridSolutionEngine()
                 
                 # Generate solutions for each detection result

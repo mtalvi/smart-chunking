@@ -4,7 +4,7 @@ Abstract base class for all log error detectors.
 
 from abc import ABC, abstractmethod
 from typing import List, Iterator, Optional, Tuple
-from ..models.results import DetectionResult
+from src.models.results import DetectionResult
 
 
 class BaseDetector(ABC):

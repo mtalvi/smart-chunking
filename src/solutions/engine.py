@@ -9,8 +9,8 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-from .pattern_matcher import PatternBasedSolutionMatcher
-from .llm_generator import LLMSolutionGenerator
+from src.solutions.pattern_matcher import PatternBasedSolutionMatcher
+from src.solutions.llm_generator import LLMSolutionGenerator
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,118 @@
+# Smart-Chunking Detection Engine - OpenShift Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-chunking-engine
+  namespace: mtalvi-alm
+  labels:
+    app: smart-chunking-engine
+    component: detection
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: smart-chunking-engine
+  template:
+    metadata:
+      labels:
+        app: smart-chunking-engine
+        component: detection
+    spec:
+      # Handle GPU node taints (your nodes have nvidia.com/gpu=SHARED_L40S:NoSchedule)
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Equal
+        value: SHARED_L40S
+        effect: NoSchedule
+      # Optional: Prefer GPU nodes for better performance
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      containers:
+      - name: detection-engine
+        image: quay.io/rh-ee-mtalvi/smart-chunking-engine:v1.0
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: TRANSFORMERS_CACHE
+          value: "/app/.cache/transformers"
+        - name: HF_HOME
+          value: "/app/.cache/huggingface"
+        resources:
+          requests:
+            cpu: "1"
+            memory: "3Gi"
+          limits:
+            cpu: "4"
+            memory: "6Gi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: cache-volume
+          mountPath: /app/.cache
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: config-volume
+        configMap:
+          name: patterns-config
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 5Gi
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 2Gi
+---
+# Service for Smart-Chunking Engine
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-chunking-service
+  namespace: mtalvi-alm
+  labels:
+    app: smart-chunking-engine
+spec:
+  selector:
+    app: smart-chunking-engine
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+# Route for External Access
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: smart-chunking-route
+  namespace: mtalvi-alm
+  labels:
+    app: smart-chunking-engine
+spec:
+  to:
+    kind: Service
+    name: smart-chunking-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

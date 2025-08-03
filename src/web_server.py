@@ -17,7 +17,7 @@ try:
 except ImportError:
     FLASK_AVAILABLE = False
 
-from .report_generator import ReportGenerator
+from src.report_generator import ReportGenerator
 
 
 class LogAnalysisWebServer:

@@ -5,7 +5,7 @@ Context extraction utility for capturing relevant log context around detected er
 from typing import List, Dict, Optional, Tuple, Set
 from pathlib import Path
 import mmap
-from ..models.results import DetectionResult
+from src.models.results import DetectionResult
 
 
 class ContextExtractor:

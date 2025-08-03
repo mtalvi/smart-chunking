@@ -17,8 +17,8 @@ except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
     print("Warning: sentence-transformers not available. Semantic detection disabled.")
 
-from .base import BaseDetector
-from ..models.results import DetectionResult
+from src.detectors.base import BaseDetector
+from src.models.results import DetectionResult
 
 
 class SemanticDetector(BaseDetector):

@@ -10,8 +10,8 @@ import statistics
 import numpy as np
 from functools import lru_cache
 
-from .base import BaseDetector
-from ..models.results import DetectionResult
+from src.detectors.base import BaseDetector
+from src.models.results import DetectionResult
 
 
 class StatisticalAnomalyDetector(BaseDetector):

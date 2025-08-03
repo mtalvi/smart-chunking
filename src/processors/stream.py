@@ -14,9 +14,9 @@ import mmap
 from tqdm import tqdm
 import platform
 
-from ..detectors.base import BaseDetector
-from ..models.results import DetectionResult, AnalysisResults
-from .context import ContextExtractor
+from src.detectors.base import BaseDetector
+from src.models.results import DetectionResult, AnalysisResults
+from src.processors.context import ContextExtractor
 
 
 def process_file_chunk(args):

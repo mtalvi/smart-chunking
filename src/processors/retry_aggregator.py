@@ -9,7 +9,7 @@ from typing import List, Dict, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 
-from ..models.results import DetectionResult, AnalysisResults
+from src.models.results import DetectionResult, AnalysisResults
 
 
 @dataclass

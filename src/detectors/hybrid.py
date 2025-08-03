@@ -6,23 +6,23 @@ zero-shot classification, and statistical anomaly detection.
 from typing import Optional, List, Dict, Tuple
 import numpy as np
 
-from .base import BaseDetector
-from .pattern import PatternDetector
-from .semantic import SemanticDetector, SENTENCE_TRANSFORMERS_AVAILABLE
+from src.detectors.base import BaseDetector
+from src.detectors.pattern import PatternDetector
+from src.detectors.semantic import SemanticDetector, SENTENCE_TRANSFORMERS_AVAILABLE
 
 try:
-    from .zeroshot import ZeroShotErrorClassifier
+    from src.detectors.zeroshot import ZeroShotErrorClassifier
     ZEROSHOT_AVAILABLE = True
 except ImportError:
     ZEROSHOT_AVAILABLE = False
 
 try:
-    from .statistical import StatisticalAnomalyDetector
+    from src.detectors.statistical import StatisticalAnomalyDetector
     STATISTICAL_AVAILABLE = True
 except ImportError:
     STATISTICAL_AVAILABLE = False
 
-from ..models.results import DetectionResult
+from src.models.results import DetectionResult
 
 
 class HybridDetector(BaseDetector):

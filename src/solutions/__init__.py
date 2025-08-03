@@ -5,9 +5,9 @@ This package implements the Hybrid Troubleshooting Support Strategy from ADR-001
 It provides pattern-based solution matching with LLM fallback for unknown errors.
 """
 
-from .engine import HybridSolutionEngine
-from .pattern_matcher import PatternBasedSolutionMatcher
-from .llm_generator import LLMSolutionGenerator
+from src.solutions.engine import HybridSolutionEngine
+from src.solutions.pattern_matcher import PatternBasedSolutionMatcher
+from src.solutions.llm_generator import LLMSolutionGenerator
 
 __all__ = [
     'HybridSolutionEngine',

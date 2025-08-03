@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import asdict
 
-from .models.results import AnalysisResults, DetectionResult
+from src.models.results import AnalysisResults, DetectionResult
 
 
 class ReportGenerator:
