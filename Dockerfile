@@ -42,12 +42,12 @@ ENV FLASK_PORT=8080
 # Expose API port
 EXPOSE 8080
 
+# Test container environment during build
+RUN python container_test.py
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Test imports during build (optional - can be removed for production)
-RUN python test_imports.py || echo "Warning: Import test failed"
-
-# Default command - run the web server
+# Default command - run the web server using direct execution
 CMD ["python", "src/web_server.py", "--host", "0.0.0.0", "--port", "8080"]
