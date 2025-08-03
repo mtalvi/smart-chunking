@@ -308,15 +308,17 @@ Detection Result → Pattern-Based Solutions → LLM Fallback → Actionable Ste
 
 ## Related ADRs
 
-- ADR-002: Data Storage and Persistence Strategy (Future)
-- ADR-003: Streaming Architecture for High-Volume Logs (Future)
-- ADR-004: Security and RBAC Implementation (Future)
-- ADR-005: Solution Validation and Feedback Framework (Future)
+- ADR-002: OpenShift GPU-Accelerated LLM Deployment Architecture (December 2024)
+- ADR-003: Data Storage and Persistence Strategy (Future)
+- ADR-004: Streaming Architecture for High-Volume Logs (Future)
+- ADR-005: Security and RBAC Implementation (Future)
+- ADR-006: Solution Validation and Feedback Framework (Future)
 
 ---
 
-**Last Updated:** July 31, 2025  
-**Next Review:** August 30, 2025  
+**Last Updated:** December 19, 2024  
+**Next Review:** January 19, 2025  
 **Amendment #1:** July 30, 2025 - Added Decision #6: Hybrid Troubleshooting Support Strategy with automatic pattern database updates  
 **Amendment #2:** July 31, 2025 - ✅ **IMPLEMENTATION COMPLETE** - All 6 decisions successfully implemented and tested  
+**Amendment #3:** December 19, 2024 - 🔄 **EVOLUTION**: ADR-002 introduces OpenShift GPU cluster deployment for enhanced LLM performance  
 **Stakeholders:** Development Team, SRE Team, Architecture Review Board 

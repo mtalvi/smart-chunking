@@ -1,0 +1,1282 @@
+{
+  "results": [
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 149,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: skipping installation of kubernetes.core==3.0.1 ;",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.461)       0:00:04.317 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Rewrite requirements, filter out installed collections (EE)] *************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.239)       0:00:04.557 *********** "
+      ],
+      "context_after": [
+        "kubernetes.core==5.1.0 already installed in EE",
+        "[WARNING]: skipping installation of amazon.aws==6.4.0 ; amazon.aws==9.2.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.general==7.4.0 ;",
+        "community.general==10.3.1 already installed in EE",
+        "[WARNING]: skipping installation of ansible.posix==1.5.4 ; ansible.posix==2.0.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.okd==2.3.0 ; community.okd==4.0.1",
+        "already installed in EE",
+        "changed: [localhost]",
+        "",
+        "TASK [Install collections from requirements.yml (EE)] **************************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.275)       0:00:04.832 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Cleanup tempfile (EE)] ***************************************************",
+        "Friday 18 July 2025  17:59:06 +0000 (0:00:00.445)       0:00:05.278 *********** ",
+        "changed: [localhost]"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027576",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 151,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: skipping installation of amazon.aws==6.4.0 ; amazon.aws==9.2.0",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.461)       0:00:04.317 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Rewrite requirements, filter out installed collections (EE)] *************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.239)       0:00:04.557 *********** ",
+        "[WARNING]: skipping installation of kubernetes.core==3.0.1 ;",
+        "kubernetes.core==5.1.0 already installed in EE"
+      ],
+      "context_after": [
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.general==7.4.0 ;",
+        "community.general==10.3.1 already installed in EE",
+        "[WARNING]: skipping installation of ansible.posix==1.5.4 ; ansible.posix==2.0.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.okd==2.3.0 ; community.okd==4.0.1",
+        "already installed in EE",
+        "changed: [localhost]",
+        "",
+        "TASK [Install collections from requirements.yml (EE)] **************************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.275)       0:00:04.832 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Cleanup tempfile (EE)] ***************************************************",
+        "Friday 18 July 2025  17:59:06 +0000 (0:00:00.445)       0:00:05.278 *********** ",
+        "changed: [localhost]"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027601",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 153,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: skipping installation of community.general==7.4.0 ;",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.461)       0:00:04.317 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Rewrite requirements, filter out installed collections (EE)] *************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.239)       0:00:04.557 *********** ",
+        "[WARNING]: skipping installation of kubernetes.core==3.0.1 ;",
+        "kubernetes.core==5.1.0 already installed in EE",
+        "[WARNING]: skipping installation of amazon.aws==6.4.0 ; amazon.aws==9.2.0",
+        "already installed in EE"
+      ],
+      "context_after": [
+        "community.general==10.3.1 already installed in EE",
+        "[WARNING]: skipping installation of ansible.posix==1.5.4 ; ansible.posix==2.0.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.okd==2.3.0 ; community.okd==4.0.1",
+        "already installed in EE",
+        "changed: [localhost]",
+        "",
+        "TASK [Install collections from requirements.yml (EE)] **************************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.275)       0:00:04.832 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Cleanup tempfile (EE)] ***************************************************",
+        "Friday 18 July 2025  17:59:06 +0000 (0:00:00.445)       0:00:05.278 *********** ",
+        "changed: [localhost]"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027565",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 155,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: skipping installation of ansible.posix==1.5.4 ; ansible.posix==2.0.0",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.461)       0:00:04.317 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Rewrite requirements, filter out installed collections (EE)] *************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.239)       0:00:04.557 *********** ",
+        "[WARNING]: skipping installation of kubernetes.core==3.0.1 ;",
+        "kubernetes.core==5.1.0 already installed in EE",
+        "[WARNING]: skipping installation of amazon.aws==6.4.0 ; amazon.aws==9.2.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.general==7.4.0 ;",
+        "community.general==10.3.1 already installed in EE"
+      ],
+      "context_after": [
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.okd==2.3.0 ; community.okd==4.0.1",
+        "already installed in EE",
+        "changed: [localhost]",
+        "",
+        "TASK [Install collections from requirements.yml (EE)] **************************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.275)       0:00:04.832 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Cleanup tempfile (EE)] ***************************************************",
+        "Friday 18 July 2025  17:59:06 +0000 (0:00:00.445)       0:00:05.278 *********** ",
+        "changed: [localhost]"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027584",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 157,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: skipping installation of community.okd==2.3.0 ; community.okd==4.0.1",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.461)       0:00:04.317 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Rewrite requirements, filter out installed collections (EE)] *************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.239)       0:00:04.557 *********** ",
+        "[WARNING]: skipping installation of kubernetes.core==3.0.1 ;",
+        "kubernetes.core==5.1.0 already installed in EE",
+        "[WARNING]: skipping installation of amazon.aws==6.4.0 ; amazon.aws==9.2.0",
+        "already installed in EE",
+        "[WARNING]: skipping installation of community.general==7.4.0 ;",
+        "community.general==10.3.1 already installed in EE",
+        "[WARNING]: skipping installation of ansible.posix==1.5.4 ; ansible.posix==2.0.0",
+        "already installed in EE"
+      ],
+      "context_after": [
+        "already installed in EE",
+        "changed: [localhost]",
+        "",
+        "TASK [Install collections from requirements.yml (EE)] **************************",
+        "Friday 18 July 2025  17:59:05 +0000 (0:00:00.275)       0:00:04.832 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [Cleanup tempfile (EE)] ***************************************************",
+        "Friday 18 July 2025  17:59:06 +0000 (0:00:00.445)       0:00:05.278 *********** ",
+        "changed: [localhost]"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027611",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 294,
+      "confidence": 0.8807556722888819,
+      "error_type": "hybrid_fatal",
+      "original_line": "fatal: [localhost]: FAILED! => {\"changed\": false, \"msg\": \"WARNING: key_name is DEPRECATED and should not be defined when using new create_ssh_provision_key role.\"}",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:FATAL",
+        "pattern:Fatal:",
+        "pattern:FAIL",
+        "pattern:FAILED!",
+        "pattern:key_name is DEPRECATED",
+        "pattern:fatal: \\[.*\\]: (FAILED|UNREACHABLE)!",
+        "statistical:line_length_long_line"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern",
+          "statistical"
+        ],
+        "detector_count": 2,
+        "individual_confidences": {
+          "pattern": 0.95,
+          "statistical": 0.603778361444409
+        },
+        "individual_error_types": {
+          "pattern": "fatal",
+          "statistical": "statistical_long_line"
+        },
+        "consensus_required": false,
+        "statistical_details": {
+          "anomaly_type": "line_length_long_line",
+          "anomaly_description": "Line length (163 chars) is 3.02 standard deviations from normal",
+          "statistical_data": {
+            "line_length": 163,
+            "baseline_mean": 87.54545454545455,
+            "baseline_stdev": 25.02544159995438
+          },
+          "z_score": 3.015113445777636,
+          "detection_method": "statistical_analysis"
+        }
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.033)       0:00:07.854 *********** ",
+        "included: /runner/project/ansible/roles-infra/create_ssh_provision_key/tasks/checks.yaml for localhost",
+        "",
+        "TASK [create_ssh_provision_key : Ensure key_name is not defined] ***************",
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.019)       0:00:07.874 *********** "
+      ],
+      "context_after": [
+        "...ignoring",
+        "",
+        "TASK [create_ssh_provision_key : Generate SSH keys] ****************************",
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.020)       0:00:07.894 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [create_ssh_provision_key : Fix permission of ssh key] ********************",
+        "Friday 18 July 2025  17:59:09 +0000 (0:00:00.289)       0:00:08.184 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [create_ssh_provision_key : Generate SSH pub key content] *****************"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027592",
+      "solutions": [
+        {
+          "title": "General Fatal Error Troubleshooting",
+          "confidence": 0.5,
+          "steps": [
+            "Check the full error message and context",
+            "Verify target host connectivity and accessibility",
+            "Review Ansible playbook syntax and configuration",
+            "Check logs for additional error details"
+          ],
+          "category": "fallback",
+          "type": "fallback_solution",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "15-30 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.55,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 295,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "...ignoring",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:...ignoring",
+        "pattern:ignoring",
+        "pattern:...ignoring"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.033)       0:00:07.854 *********** ",
+        "included: /runner/project/ansible/roles-infra/create_ssh_provision_key/tasks/checks.yaml for localhost",
+        "",
+        "TASK [create_ssh_provision_key : Ensure key_name is not defined] ***************",
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.019)       0:00:07.874 *********** ",
+        "fatal: [localhost]: FAILED! => {\"changed\": false, \"msg\": \"WARNING: key_name is DEPRECATED and should not be defined when using new create_ssh_provision_key role.\"}"
+      ],
+      "context_after": [
+        "",
+        "TASK [create_ssh_provision_key : Generate SSH keys] ****************************",
+        "Friday 18 July 2025  17:59:08 +0000 (0:00:00.020)       0:00:07.894 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [create_ssh_provision_key : Fix permission of ssh key] ********************",
+        "Friday 18 July 2025  17:59:09 +0000 (0:00:00.289)       0:00:08.184 *********** ",
+        "changed: [localhost]",
+        "",
+        "TASK [create_ssh_provision_key : Generate SSH pub key content] *****************"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027558",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 672,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: Using a variable for a task's 'args' is unsafe in some situations",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:\\[WARNING\\]:"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "Friday 18 July 2025  17:59:18 +0000 (0:00:00.018)       0:00:17.315 *********** ",
+        "skipping: [localhost]",
+        "",
+        "TASK [infra-ec2-template-create : Launch CloudFormation template (local)] ******",
+        "Friday 18 July 2025  17:59:18 +0000 (0:00:00.016)       0:00:17.331 *********** "
+      ],
+      "context_after": [
+        "(see",
+        "https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-",
+        "unsafe)",
+        "[DEPRECATION WARNING]: Param 'template' is deprecated. See the module docs for ",
+        "more information. This feature will be removed from amazon.aws in a release ",
+        "after 2026-05-01. Deprecation warnings can be disabled by setting ",
+        "deprecation_warnings=False in ansible.cfg.",
+        "changed: [localhost]",
+        "",
+        "TASK [infra-ec2-template-create : debug cloudformation] ************************"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027545",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 857,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: Could not match supplied host pattern, ignoring: windows",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:Could not match supplied host pattern",
+        "pattern:ignoring",
+        "pattern:\\[WARNING\\]:",
+        "pattern:...ignoring"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "skipping: [bastion.r7b9g.internal]",
+        "",
+        "TASK [Set passthrough user data] ***********************************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.020)       0:02:57.593 *********** ",
+        "skipping: [localhost]"
+      ],
+      "context_after": [
+        "[WARNING]: Could not match supplied host pattern, ignoring: network",
+        "",
+        "PLAY [Step 001.3 Configure Linux Hosts and Wait for Connection] ****************",
+        "",
+        "TASK [set facts for remote access] *********************************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.037)       0:02:57.630 *********** ",
+        "ok: [bastion.r7b9g.internal]",
+        "",
+        "TASK [Run infra-ec2-wait_for_linux_hosts Role] *********************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.018)       0:02:57.648 *********** ",
+        ""
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027571",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 858,
+      "confidence": 0.7500000000000001,
+      "error_type": "hybrid_warning",
+      "original_line": "[WARNING]: Could not match supplied host pattern, ignoring: network",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:Could not match supplied host pattern",
+        "pattern:ignoring",
+        "pattern:\\[WARNING\\]:",
+        "pattern:...ignoring"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.75
+        },
+        "individual_error_types": {
+          "pattern": "warning"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "skipping: [bastion.r7b9g.internal]",
+        "",
+        "TASK [Set passthrough user data] ***********************************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.020)       0:02:57.593 *********** ",
+        "skipping: [localhost]",
+        "[WARNING]: Could not match supplied host pattern, ignoring: windows"
+      ],
+      "context_after": [
+        "",
+        "PLAY [Step 001.3 Configure Linux Hosts and Wait for Connection] ****************",
+        "",
+        "TASK [set facts for remote access] *********************************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.037)       0:02:57.630 *********** ",
+        "ok: [bastion.r7b9g.internal]",
+        "",
+        "TASK [Run infra-ec2-wait_for_linux_hosts Role] *********************************",
+        "Friday 18 July 2025  18:01:58 +0000 (0:00:00.018)       0:02:57.648 *********** ",
+        ""
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027597",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.4,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 913,
+      "confidence": 0.85,
+      "error_type": "hybrid_statistical_long_line",
+      "original_line": "changed: [bastion.r7b9g.internal] => (item={'key': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC3nKRSIwWn7pjMf2i1TyXgjsauEIoDS8Xulad2ZAbsmZrWcKU5hPi23xq0g2AjRYiXml8zSX9jAQfmlKnrXGYo5WN39iXGRI3lFJmXwmEHne3Z0qtUgt9MBA4w0Tcunw7pXniKntvo2oiDYZlXHztRMHMeUkUjLgCGjn2cfi0uqd4pxLmneMziHMKDxcyy+9MaGnWr5Bs27r3b6rWNFqG2fAo1Z5ZWEA/r3MhdI9ZzMRJVTUhunpstwMX8MRxx/OGk0zynyHcSkh91sqZ3xhPpvRkmYLRa5I0aw88AMenWBfc586FyORL2e/UVoIoyMkBMnovaRIoiTj74RuPeZ6gGKbbfpt1ggDs4j9Z1Go51GlGPYcchvLQvx+Ucv5+tLZSqZBhPOXLRqFuQgRZz4R6j5O5UkfdjLJxBoHQZxT0Wdzd/XiGcAlyDOq8puNSxdF3w/8eGGSKDdUONv1tc1dcTFd6kR+jYaedjD1fldVrC+4fRUFkFqEovDPVI4159VSqJWz78WuqazNnCRMVDnS4Le+Er1pvTbk5rOdYUkF67vxVwD3cyJ3D1C49wVsIc3+kngZN2246OEMsbVugEPG4A8/UOlHIE5iBps+mM9GX6UFSj4aLFh15XeOGKs7aH2r1thfvFPSvk12t8QvNDhhhhAf5EzzypvNEbXQ6fk3YSUw== rsa_admin_key_2023'})",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "statistical:line_length_long_line"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "statistical"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "statistical": 0.85
+        },
+        "individual_error_types": {
+          "statistical": "statistical_long_line"
+        },
+        "consensus_required": false,
+        "statistical_details": {
+          "anomaly_type": "line_length_long_line",
+          "anomaly_description": "Line length (798 chars) is 4.34 standard deviations from normal",
+          "statistical_data": {
+            "line_length": 798,
+            "baseline_mean": 118.14285714285714,
+            "baseline_stdev": 156.82164573625852
+          },
+          "z_score": 4.335225151255724,
+          "detection_method": "statistical_analysis"
+        }
+      },
+      "context_before": [
+        "Friday 18 July 2025  18:02:04 +0000 (0:00:00.029)       0:03:03.648 *********** ",
+        "changed: [bastion.r7b9g.internal] => (item={'key': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvZvn+GL0wTOsAdh1ikIQoqj2Fw/RA6F14O347rgKdpkgOQpGQk1k2gM8wcla2Y1o0bPIzwlNy1oh5o9uNjZDMeDcEXWuXbu0cRBy4pVRhh8a8zAZfssnqoXHHLyPyHWpdTmgIhr0UIGYrzHrnySAnUcDp3gJuE46UEBtrlyv94cVvZf+EZUTaZ+2KjTRLoNryCn7vKoGHQBooYg1DeHLcLSRWEADUo+bP0y64+X/XTMZOAXbf8kTXocqAgfl/usbYdfLOgwU6zWuj8vxzAKuMEXS1AJSp5aeqRKlbbw40IkTmLoQIgJdb2Zt98BH/xHDe9xxhscUCfWeS37XLp75J opentlc_admin_backdoor'})",
+        "changed: [bastion.r7b9g.internal] => (item={'key': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCg5PJgwAB8U2NiXh4aRZAg09f3xjT3y1CP322StmT4ljiqhXoqOOZ++qDIKFmtHGmeEjvkCo11M2oVmJTeaibeS0E+Xsoi9wTcit47h2ka7WPdzhy/togFQOVAftbwi3RtHDOweIFL18FQ8inhu9W/oFibsZjQEWtHoHtLkmA5zOSQtWDmVfx3iWrKd4svkNbJ+SNZMnD0tCDoot3y0Knzyt+wpZtVd94YXpUDTCJ8Ie1nFSdm7H/QB9/bDXeOSSnHBq2xSmywodNoyA1gFZ1hhpPNEauQjzeKCMpNLPATg/jtQb1zojG6QnO/7I5euKOlDeJ1Odg35aTG31p8EbT3UL8NZssdn3YY3OEQ/2rN0PaQ+zxzmzfh1otx4Rsh1IbD5S99GuQD2ma7m0zOzrBb8Mil5TCaTaK8mIADq/lclj0sAMrH1EXyFvDiHEG+cV0iMyXOxEMTJs4YLr8DyqsTZ34TvVSJP9/0YwQuRYhg0MJmFbMvl/4yibTgyvTYLN0= instructor-key-2022'})",
+        "changed: [bastion.r7b9g.internal] => (item={'key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIIDDIOD4M5yYo3uCFDBDb6del+NG2fkboWh90kW/S6H elliptical_instructor_key_2024'})",
+        "changed: [bastion.r7b9g.internal] => (item={'key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOBfsRMLCEQt86EZnvQ/rK49wo1odLqpd1NEz3tDjUWY elliptical_admin_key_2023'})"
+      ],
+      "context_after": [
+        "",
+        "TASK [ssh_authorized_keys : Add all authorized keys (legacy var all_ssh_authorized_keys)] ***",
+        "Friday 18 July 2025  18:02:08 +0000 (0:00:03.646)       0:03:07.295 *********** ",
+        "skipping: [bastion.r7b9g.internal]",
+        "",
+        "PLAY [Step 001.4 Configure Windows Hosts and Wait for Connection] **************",
+        "skipping: no hosts matched",
+        "",
+        "PLAY [Step 002 - Post Infrastructure] ******************************************",
+        ""
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.027606",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.45,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 1709,
+      "confidence": 0.9,
+      "error_type": "hybrid_python traceback",
+      "original_line": "\"rosa_token_warning\": true,",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    "
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.9
+        },
+        "individual_error_types": {
+          "pattern": "python traceback"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "        \"bastion_public_hostname\": \"bastion.r7b9g.sandbox2756.opentlc.com\",",
+        "        \"bastion_ssh_password\": \"B2oV5t5GwewreqFL\",",
+        "        \"bastion_ssh_user_name\": \"rosa\",",
+        "        \"guid\": \"r7b9g\",",
+        "        \"rosa_subdomain_base\": \"r7b9g.sandbox2756.opentlc.com\","
+      ],
+      "context_after": [
+        "        \"ssh_command\": \"ssh rosa@bastion.r7b9g.sandbox2756.opentlc.com\",",
+        "        \"ssh_password\": \"B2oV5t5GwewreqFL\",",
+        "        \"ssh_username\": \"rosa\",",
+        "        \"targethost\": \"bastion.r7b9g.sandbox2756.opentlc.com\"",
+        "    }",
+        "}",
+        "",
+        "TASK [Save ROSA user data when ROSA has been installed] ************************",
+        "Friday 18 July 2025  18:33:39 +0000 (0:00:00.030)       0:34:38.459 *********** ",
+        "ok: [bastion.r7b9g.internal] => {"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.154548",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.45,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 1772,
+      "confidence": 0.7292680486871089,
+      "error_type": "hybrid_fatal",
+      "original_line": "fatal: [bastion.r7b9g.internal]: FAILED! => {\"assertion\": \"rosa_setup_cluster_admin | default(true) | bool\", \"changed\": false, \"evaluated_to\": false, \"msg\": \"Cluster admin must be created and logged into OpenShift for workloads to be deployed.\"}",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:FATAL",
+        "pattern:Fatal:",
+        "pattern:FAIL",
+        "pattern:FAILED!",
+        "pattern:fatal: \\[.*\\]: (FAILED|UNREACHABLE)!",
+        "pattern:\"assertion\".*\"evaluated_to\": false"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern",
+          "semantic"
+        ],
+        "detector_count": 2,
+        "individual_confidences": {
+          "pattern": 0.95,
+          "semantic": 0.43495878026992063
+        },
+        "individual_error_types": {
+          "pattern": "fatal",
+          "semantic": "semantic_assertion"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "",
+        "PLAY [Install workloads] *******************************************************",
+        "",
+        "TASK [Check that cluster admin has been created and logged in] *****************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.043)       0:34:39.412 *********** "
+      ],
+      "context_after": [
+        "",
+        "NO MORE HOSTS LEFT *************************************************************",
+        "",
+        "PLAY RECAP *********************************************************************",
+        "bastion.r7b9g.internal     : ok=129  changed=76   unreachable=0    failed=1    skipped=65   rescued=0    ignored=0   ",
+        "localhost                  : ok=113  changed=29   unreachable=0    failed=0    skipped=71   rescued=0    ignored=1   ",
+        "",
+        "TASKS RECAP ********************************************************************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.023)       0:34:39.436 *********** ",
+        "=============================================================================== ",
+        "Wait for ROSA HCP console URL to be available ------------------------- 740.51s",
+        "Wait for ROSA HCP installer completion -------------------------------- 617.10s",
+        "infra-ec2-template-create : Launch CloudFormation template (local) ---- 158.02s",
+        "Run terraform apply --------------------------------------------------- 120.84s",
+        "common : install common packages for RHEL 9 --------------------------- 107.01s",
+        "Init AWS account for ROSA ---------------------------------------------- 93.68s"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.154598",
+      "solutions": [
+        {
+          "title": "Create ROSA Cluster Admin User",
+          "confidence": 0.8985609292505506,
+          "steps": [
+            "rosa create admin --cluster=cluster_name --password",
+            "Save admin credentials securely",
+            "oc login https://api.cluster.com --username cluster-admin",
+            "Verify access: oc whoami && oc get nodes"
+          ],
+          "category": "rosa_admin_missing",
+          "estimated_fix_time": "5-10 minutes",
+          "type": "pattern_match",
+          "matched_patterns": [
+            "cluster admin must be created",
+            "rosa_setup_cluster_admin.*false",
+            "assertion.*cluster.*admin"
+          ],
+          "source": "pattern_database",
+          "confidence_boost": 0.1,
+          "detection_confidence": 0.7292680486871089,
+          "solution_source": "pattern_database",
+          "hybrid_rank": 1.0,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 1777,
+      "confidence": 0.9,
+      "error_type": "hybrid_python traceback",
+      "original_line": "bastion.r7b9g.internal     : ok=129  changed=76   unreachable=0    failed=1    skipped=65   rescued=0    ignored=0",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:FAIL",
+        "pattern:    ",
+        "pattern:    "
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.9
+        },
+        "individual_error_types": {
+          "pattern": "python traceback"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "",
+        "PLAY [Install workloads] *******************************************************",
+        "",
+        "TASK [Check that cluster admin has been created and logged in] *****************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.043)       0:34:39.412 *********** ",
+        "fatal: [bastion.r7b9g.internal]: FAILED! => {\"assertion\": \"rosa_setup_cluster_admin | default(true) | bool\", \"changed\": false, \"evaluated_to\": false, \"msg\": \"Cluster admin must be created and logged into OpenShift for workloads to be deployed.\"}",
+        "",
+        "NO MORE HOSTS LEFT *************************************************************",
+        "",
+        "PLAY RECAP *********************************************************************"
+      ],
+      "context_after": [
+        "localhost                  : ok=113  changed=29   unreachable=0    failed=0    skipped=71   rescued=0    ignored=1   ",
+        "",
+        "TASKS RECAP ********************************************************************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.023)       0:34:39.436 *********** ",
+        "=============================================================================== ",
+        "Wait for ROSA HCP console URL to be available ------------------------- 740.51s",
+        "Wait for ROSA HCP installer completion -------------------------------- 617.10s",
+        "infra-ec2-template-create : Launch CloudFormation template (local) ---- 158.02s",
+        "Run terraform apply --------------------------------------------------- 120.84s",
+        "common : install common packages for RHEL 9 --------------------------- 107.01s",
+        "Init AWS account for ROSA ---------------------------------------------- 93.68s"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.154605",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.45,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "test_logs/job_1434559.txt",
+      "line_number": 1778,
+      "confidence": 0.9,
+      "error_type": "hybrid_python traceback",
+      "original_line": "localhost                  : ok=113  changed=29   unreachable=0    failed=0    skipped=71   rescued=0    ignored=1",
+      "detector_name": "HybridDetector",
+      "matched_patterns": [
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:    ",
+        "pattern:FAIL",
+        "pattern:    ",
+        "pattern:    "
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {
+        "detection_method": "hybrid_ml_ensemble",
+        "active_detectors": [
+          "pattern"
+        ],
+        "detector_count": 1,
+        "individual_confidences": {
+          "pattern": 0.9
+        },
+        "individual_error_types": {
+          "pattern": "python traceback"
+        },
+        "consensus_required": false
+      },
+      "context_before": [
+        "",
+        "PLAY [Install workloads] *******************************************************",
+        "",
+        "TASK [Check that cluster admin has been created and logged in] *****************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.043)       0:34:39.412 *********** ",
+        "fatal: [bastion.r7b9g.internal]: FAILED! => {\"assertion\": \"rosa_setup_cluster_admin | default(true) | bool\", \"changed\": false, \"evaluated_to\": false, \"msg\": \"Cluster admin must be created and logged into OpenShift for workloads to be deployed.\"}",
+        "",
+        "NO MORE HOSTS LEFT *************************************************************",
+        "",
+        "PLAY RECAP *********************************************************************",
+        "bastion.r7b9g.internal     : ok=129  changed=76   unreachable=0    failed=1    skipped=65   rescued=0    ignored=0   "
+      ],
+      "context_after": [
+        "",
+        "TASKS RECAP ********************************************************************",
+        "Friday 18 July 2025  18:33:40 +0000 (0:00:00.023)       0:34:39.436 *********** ",
+        "=============================================================================== ",
+        "Wait for ROSA HCP console URL to be available ------------------------- 740.51s",
+        "Wait for ROSA HCP installer completion -------------------------------- 617.10s",
+        "infra-ec2-template-create : Launch CloudFormation template (local) ---- 158.02s",
+        "Run terraform apply --------------------------------------------------- 120.84s",
+        "common : install common packages for RHEL 9 --------------------------- 107.01s",
+        "Init AWS account for ROSA ---------------------------------------------- 93.68s"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.154527",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.45,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    },
+    {
+      "file_path": "FAILED - RETRYING: [bastion.r7b9g.internal]: Wait for ROSA HCP console URL to be available (60 retries left).",
+      "line_number": 1514,
+      "confidence": 0.95,
+      "error_type": "retry_pattern_summary",
+      "original_line": "RETRY PATTERN: Wait for ROSA HCP console URL to be available failed with 12 retries (lines 1514-1525)",
+      "detector_name": "RetryAggregator",
+      "matched_patterns": [
+        "FAILED - RETRYING"
+      ],
+      "matched_semantic_phrases": [],
+      "match_details": {},
+      "context_before": [
+        "Aggregated from 12 retry attempts"
+      ],
+      "context_after": [
+        "Host: bastion.r7b9g.internal",
+        "Lines: 1514-1525"
+      ],
+      "cluster_id": null,
+      "retry_count": null,
+      "workflow_stage": null,
+      "timestamp": "2025-07-31T16:18:58.765939",
+      "solutions": [
+        {
+          "title": "General Error Analysis Steps",
+          "confidence": 0.4,
+          "steps": [
+            "Carefully read the complete error message",
+            "Check system logs and Ansible verbose output",
+            "Verify system requirements and dependencies",
+            "Test components individually to isolate the issue",
+            "Consult official documentation for the specific error"
+          ],
+          "category": "general",
+          "type": "generic_fallback",
+          "source": "built_in_fallback",
+          "estimated_fix_time": "20-45 minutes",
+          "solution_source": "llm_generated",
+          "hybrid_rank": 0.45,
+          "rank": 1,
+          "total_solutions_available": 1
+        }
+      ],
+      "solution_source": "hybrid"
+    }
+  ],
+  "summary": {
+    "total_errors": 16,
+    "files_with_errors": 2,
+    "avg_confidence": 0.8037514825609995,
+    "error_types": {
+      "hybrid_warning": 9,
+      "hybrid_fatal": 2,
+      "hybrid_statistical_long_line": 1,
+      "hybrid_python traceback": 3,
+      "retry_pattern_summary": 1
+    },
+    "detector_stats": {},
+    "processing_stats": {
+      "total_files_processed": 1,
+      "total_lines_processed": 1778,
+      "processing_time": 6.918236494064331
+    }
+  },
+  "metadata": {
+    "total_files_processed": 1,
+    "total_lines_processed": 1778,
+    "processing_time": 6.918236494064331,
+    "config": {},
+    "detector_stats": {},
+    "created_at": "2025-07-31T16:18:51.847257"
+  }
+}
