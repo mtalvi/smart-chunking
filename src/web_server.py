@@ -52,10 +52,20 @@ class LogAnalysisWebServer:
                 data = self.report_generator.load_results()
                 summary = data['summary']
                 
-                # Calculate additional metrics
+                # Calculate additional metrics  
                 error_rate = 0
-                if summary['total_lines_processed'] > 0:
-                    error_rate = (summary['total_errors_found'] / summary['total_lines_processed']) * 100
+                # Handle different JSON structures
+                total_lines = summary.get('processing_stats', {}).get('total_lines_processed', summary.get('total_lines_processed', 0))
+                total_errors = summary.get('total_errors', summary.get('total_errors_found', 0))
+                
+                if total_lines > 0:
+                    error_rate = (total_errors / total_lines) * 100
+                
+                # Flatten processing_stats into summary for backward compatibility
+                if 'processing_stats' in summary:
+                    summary.update(summary['processing_stats'])
+                if 'total_errors' in summary and 'total_errors_found' not in summary:
+                    summary['total_errors_found'] = summary['total_errors']
                 
                 error_types = self.report_generator._calculate_error_types(data['results'])
                 files_with_errors = self.report_generator._get_files_with_errors(data['results'])
@@ -590,7 +600,7 @@ class LogAnalysisWebServer:
                     <div class="metric-label">Files Processed</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">${summary.total_lines_processed.toLocaleString()}</div>
+                    <div class="metric-value">${(summary.total_lines_processed || 0).toLocaleString()}</div>
                     <div class="metric-label">Lines Processed</div>
                 </div>
                 <div class="metric-card">
