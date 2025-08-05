@@ -7,23 +7,38 @@ without the complexity of Streamlit.
 
 import json
 import os
+import tempfile
+import threading
+import time
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 try:
-    from flask import Flask, render_template_string, request, jsonify, send_from_directory
+    from flask import Flask, render_template_string, request, jsonify, send_from_directory, redirect, url_for, flash
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
 
 from src.report_generator import ReportGenerator
 
+# Setup logging for web server
+logger = logging.getLogger(__name__)
+
+# Import detection components
+from src.detectors import PatternDetector, SemanticDetector, HybridDetector
+from src.processors import StreamProcessor, ContextExtractor
+from src.models.results import AnalysisResults
+
+# Import solution engine
+from src.solutions.engine import HybridSolutionEngine
+
 
 class LogAnalysisWebServer:
-    """Lightweight web server for log analysis results."""
+    """Lightweight web server for log analysis with input and results."""
     
-    def __init__(self, results_path: str = "results.json", port: int = 5000, host: str = "127.0.0.1"):
+    def __init__(self, results_path: str = "analysis.json", port: int = 5000, host: str = "127.0.0.1"):
         """Initialize the web server."""
         if not FLASK_AVAILABLE:
             raise ImportError("Flask is required for the web server. Install with: pip install flask")
@@ -32,7 +47,12 @@ class LogAnalysisWebServer:
         self.port = port
         self.host = host
         self.app = Flask(__name__)
-        self.report_generator = ReportGenerator(results_path)
+        self.app.secret_key = 'smart_chunking_log_analysis'  # For flash messages
+        self.report_generator = None
+        
+        # Analysis state tracking
+        self.analysis_in_progress = False
+        self.analysis_result = None
         
         # Setup routes
         self._setup_routes()
@@ -41,14 +61,102 @@ class LogAnalysisWebServer:
         """Setup Flask routes."""
         
         @self.app.route('/')
-        def index():
-            """Main dashboard page."""
-            return render_template_string(self._get_main_template())
+        def landing_page():
+            """Landing page for log input."""
+            return render_template_string(self._get_landing_template())
+        
+        @self.app.route('/analyze', methods=['POST'])
+        def analyze_logs():
+            """Analyze uploaded or pasted logs."""
+            try:
+                # Get input method
+                input_method = request.form.get('input_method', 'paste')
+                
+                if input_method == 'paste':
+                    log_content = request.form.get('log_content', '').strip()
+                    if not log_content:
+                        flash('Please paste some log content to analyze.')
+                        return redirect(url_for('landing_page'))
+                    
+                    # Save to temporary file
+                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8')
+                    temp_file.write(log_content)
+                    temp_file.close()
+                    input_path = temp_file.name
+                    
+                elif input_method == 'upload':
+                    if 'log_file' not in request.files:
+                        flash('Please select a file to upload.')
+                        return redirect(url_for('landing_page'))
+                    
+                    file = request.files['log_file']
+                    if file.filename == '':
+                        flash('Please select a file to upload.')
+                        return redirect(url_for('landing_page'))
+                    
+                    if not file.filename.lower().endswith(('.txt', '.log')):
+                        flash('Please upload a .txt or .log file.')
+                        return redirect(url_for('landing_page'))
+                    
+                    # Save uploaded file
+                    temp_file = tempfile.NamedTemporaryFile(mode='wb', suffix='.txt', delete=False)
+                    file.save(temp_file.name)
+                    temp_file.close()
+                    input_path = temp_file.name
+                
+                else:
+                    flash('Invalid input method.')
+                    return redirect(url_for('landing_page'))
+                
+                # Start analysis in background
+                analysis_thread = threading.Thread(
+                    target=self._run_analysis,
+                    args=(input_path,),
+                    daemon=True
+                )
+                analysis_thread.start()
+                
+                # Redirect to progress page
+                return redirect(url_for('analysis_progress'))
+                
+            except Exception as e:
+                flash(f'Error processing input: {str(e)}')
+                return redirect(url_for('landing_page'))
+        
+        @self.app.route('/progress')
+        def analysis_progress():
+            """Show analysis progress."""
+            return render_template_string(self._get_progress_template())
+        
+        @self.app.route('/api/progress')
+        def api_progress():
+            """API endpoint for analysis progress."""
+            return jsonify({
+                'in_progress': self.analysis_in_progress,
+                'completed': self.analysis_result is not None,
+                'error': self.analysis_result.get('error') if isinstance(self.analysis_result, dict) and 'error' in self.analysis_result else None
+            })
+        
+        @self.app.route('/results')
+        def results_page():
+            """Results dashboard page."""
+            if not os.path.exists(self.results_path):
+                flash('No analysis results found. Please run an analysis first.')
+                return redirect(url_for('landing_page'))
+            
+            # Initialize report generator if needed
+            if self.report_generator is None:
+                self.report_generator = ReportGenerator(self.results_path)
+            
+            return render_template_string(self._get_results_template())
         
         @self.app.route('/api/summary')
         def api_summary():
             """API endpoint for summary data."""
             try:
+                if self.report_generator is None:
+                    self.report_generator = ReportGenerator(self.results_path)
+                
                 data = self.report_generator.load_results()
                 summary = data['summary']
                 
@@ -79,11 +187,14 @@ class LogAnalysisWebServer:
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
+
         @self.app.route('/api/results')
         def api_results():
             """API endpoint for results data with filtering."""
             try:
+                if self.report_generator is None:
+                    self.report_generator = ReportGenerator(self.results_path)
+                
                 data = self.report_generator.load_results()
                 results = data['results']
                 
@@ -129,6 +240,9 @@ class LogAnalysisWebServer:
         def api_result_detail(result_id):
             """API endpoint for individual result details."""
             try:
+                if self.report_generator is None:
+                    self.report_generator = ReportGenerator(self.results_path)
+                
                 data = self.report_generator.load_results()
                 results = data['results']
                 
@@ -146,6 +260,9 @@ class LogAnalysisWebServer:
         def export_data(format):
             """Export data in various formats."""
             try:
+                if self.report_generator is None:
+                    self.report_generator = ReportGenerator(self.results_path)
+                
                 if format == 'html':
                     output_path = 'temp_report.html'
                     self.report_generator.generate_html_report(output_path)
@@ -169,14 +286,662 @@ class LogAnalysisWebServer:
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
     
-    def _get_main_template(self) -> str:
-        """Get the main HTML template."""
+    def _run_analysis(self, input_path: str):
+        """Run analysis in background thread."""
+        try:
+            self.analysis_in_progress = True
+            self.analysis_result = None
+            
+            # Create detector (hybrid with specified parameters)
+            detector = HybridDetector(
+                confidence_threshold=0.7,
+                config_path="config/patterns.yaml"
+            )
+            
+            # Create context extractor
+            context_extractor = ContextExtractor(
+                context_before=5,
+                context_after=10
+            )
+            
+            # Create stream processor
+            processor = StreamProcessor(
+                detector=detector,
+                context_extractor=context_extractor,
+                parallel_workers=None  # Auto-detect
+            )
+            
+            # Process the input file
+            results = processor.process_files([input_path], show_progress=False)
+            
+            # Deduplicate results
+            if results.results:
+                original_count = len(results.results)
+                results.deduplicate()
+                dedup_count = len(results.results)
+                if original_count != dedup_count:
+                    logger.info(f"Deduplicated {original_count - dedup_count} similar results")
+            
+            # Apply retry aggregation to reduce noise from multiple RETRYING lines
+            if results.results:
+                try:
+                    logger.info("Aggregating retry patterns...")
+                    from src.processors.retry_aggregator import RetryAggregator
+                    retry_aggregator = RetryAggregator(min_retries=3)
+                    results = retry_aggregator.aggregate_retries(results)
+                    logger.info("Retry aggregation completed")
+                except Exception as e:
+                    logger.warning(f"Error during retry aggregation: {e}")
+            
+            # Add solutions using the solution engine
+            solution_engine = HybridSolutionEngine(enable_llm=True)
+            
+            # Process each result through the solution engine
+            for result in results.results:
+                # Convert result to dict format expected by solution engine
+                result_dict = {
+                    'original_line': result.original_line,
+                    'error_type': result.error_type,
+                    'confidence': result.confidence,
+                    'file_path': result.file_path,
+                    'line_number': result.line_number,
+                    'matched_patterns': getattr(result, 'matched_patterns', []),
+                    'matched_semantic_phrases': getattr(result, 'matched_semantic_phrases', []),
+                    'context_before': getattr(result, 'context_before', []),
+                    'context_after': getattr(result, 'context_after', [])
+                }
+                
+                solutions = solution_engine.find_solutions(result_dict)
+                result.solutions = solutions
+                
+                # Add solution metadata
+                if solutions:
+                    result.solution_source = 'hybrid'
+                    result.solution_confidence = max(s.get('confidence', 0) for s in solutions)
+                else:
+                    result.solution_source = 'none'
+                    result.solution_confidence = 0.0
+            
+            # Save results to JSON
+            results.to_json(Path(self.results_path))
+            
+            # Clean up temporary file
+            try:
+                os.unlink(input_path)
+            except:
+                pass  # Ignore cleanup errors
+            
+            self.analysis_result = {'status': 'completed'}
+            
+        except Exception as e:
+            self.analysis_result = {'error': str(e)}
+        finally:
+            self.analysis_in_progress = False
+    
+    def _get_landing_template(self) -> str:
+        """Get the landing page HTML template."""
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Analysis Dashboard</title>
+    <title>Smart Chunking - Log Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background: #f8f9fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .form-group input[type="file"]:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        
+        .analyze-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .analyze-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .analyze-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .features {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .feature h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .flash-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flash-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Smart Chunking</h1>
+            <p>Intelligent Log Analysis with LLM-Powered Solutions</p>
+        </div>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message error">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="/analyze" enctype="multipart/form-data">
+            <div class="input-section">
+                <div class="input-tabs">
+                    <button type="button" class="tab-button active" onclick="switchTab('paste')">
+                        📝 Paste Logs
+                    </button>
+                    <button type="button" class="tab-button" onclick="switchTab('upload')">
+                        📁 Upload File
+                    </button>
+                </div>
+                
+                <div id="paste-tab" class="tab-content active">
+                    <input type="hidden" name="input_method" value="paste">
+                    <div class="form-group">
+                        <label for="log_content">Paste your log content:</label>
+                        <textarea 
+                            name="log_content" 
+                            id="log_content" 
+                            placeholder="Paste your Ansible logs, system logs, or any text logs here...&#10;&#10;Example:&#10;2024-01-15 10:30:45 TASK [deploy-app : Copy application files] ***&#10;fatal: [web-server-01]: UNREACHABLE! => {&quot;changed&quot;: false, &quot;msg&quot;: &quot;Failed to connect to the host via ssh&quot;}"
+                        ></textarea>
+                    </div>
+                </div>
+                
+                <div id="upload-tab" class="tab-content">
+                    <input type="hidden" name="input_method" value="upload">
+                    <div class="form-group">
+                        <label for="log_file">Upload a log file (.txt or .log):</label>
+                        <input type="file" name="log_file" id="log_file" accept=".txt,.log">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="analyze-button" id="analyze-btn">
+                🚀 Analyze Logs
+            </button>
+        </form>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h3>95% Accuracy</h3>
+                <p>Hybrid ML detection combining pattern, semantic, and statistical analysis</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Instant Solutions</h3>
+                <p>Pattern-based solutions with LLM fallback for unknown errors</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Powered</h3>
+                <p>Intelligent troubleshooting guidance for every detected error</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const method = document.querySelector('input[name="input_method"]').value;
+            
+            if (method === 'paste') {
+                const content = document.getElementById('log_content').value.trim();
+                if (!content) {
+                    e.preventDefault();
+                    alert('Please paste some log content to analyze.');
+                    return;
+                }
+            } else if (method === 'upload') {
+                const file = document.getElementById('log_file').files[0];
+                if (!file) {
+                    e.preventDefault();
+                    alert('Please select a file to upload.');
+                    return;
+                }
+            }
+            
+            // Disable button and show loading
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Analyzing...';
+        });
+    </script>
+</body>
+</html>"""
+
+    def _get_progress_template(self) -> str:
+        """Get the progress page HTML template."""
+        return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis in Progress - Smart Chunking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            font-size: 1.2em;
+            margin: 20px 0;
+            color: #2c3e50;
+        }
+        
+        .progress-steps {
+            text-align: left;
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .step {
+            padding: 8px 0;
+            color: #666;
+        }
+        
+        .step.current {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .step.completed {
+            color: #27ae60;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn.success {
+            background: #27ae60;
+        }
+        
+        .btn.success:hover {
+            background: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Analyzing Your Logs</h1>
+        
+        <div id="loading-section">
+            <div class="spinner"></div>
+            <div class="status" id="status">Starting analysis...</div>
+            
+            <div class="progress-steps">
+                <div class="step current" id="step1">🔍 Initializing detection engine...</div>
+                <div class="step" id="step2">📊 Processing log content...</div>
+                <div class="step" id="step3">🎯 Running hybrid detection...</div>
+                <div class="step" id="step4">🤖 Generating AI solutions...</div>
+                <div class="step" id="step5">💾 Saving results...</div>
+            </div>
+        </div>
+        
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message">
+            ✅ Analysis completed successfully!
+            <br><br>
+            <a href="/results" class="btn success">View Results</a>
+        </div>
+        
+        <a href="/" class="btn">← Start New Analysis</a>
+    </div>
+
+    <script>
+        let stepIndex = 0;
+        const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+        const stepTexts = [
+            '🔍 Initializing detection engine...',
+            '📊 Processing log content...',
+            '🎯 Running hybrid detection...',
+            '🤖 Generating AI solutions...',
+            '💾 Saving results...'
+        ];
+        
+        function updateStep() {
+            // Mark current step as completed
+            if (stepIndex > 0) {
+                document.getElementById(steps[stepIndex - 1]).classList.remove('current');
+                document.getElementById(steps[stepIndex - 1]).classList.add('completed');
+            }
+            
+            // Update current step
+            if (stepIndex < steps.length) {
+                document.getElementById(steps[stepIndex]).classList.add('current');
+                document.getElementById('status').textContent = stepTexts[stepIndex];
+                stepIndex++;
+            }
+        }
+        
+        function checkProgress() {
+            fetch('/api/progress')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Show error
+                        document.getElementById('loading-section').style.display = 'none';
+                        document.getElementById('error-message').style.display = 'block';
+                        document.getElementById('error-message').innerHTML = 
+                            '❌ Analysis failed: ' + data.error + 
+                            '<br><br><a href="/" class="btn">Try Again</a>';
+                    } else if (data.completed) {
+                        // Show success
+                        document.getElementById('loading-section').style.display = 'none';
+                        document.getElementById('success-message').style.display = 'block';
+                    } else if (data.in_progress) {
+                        // Continue polling
+                        setTimeout(checkProgress, 1000);
+                        
+                        // Update steps periodically
+                        if (Math.random() < 0.3) {
+                            updateStep();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking progress:', error);
+                    setTimeout(checkProgress, 2000);
+                });
+        }
+        
+        // Start progress checking
+        setTimeout(checkProgress, 1000);
+        
+        // Simulate step progression
+        setTimeout(() => updateStep(), 2000);
+        setTimeout(() => updateStep(), 5000);
+        setTimeout(() => updateStep(), 8000);
+        setTimeout(() => updateStep(), 12000);
+    </script>
+</body>
+</html>"""
+
+    def _get_results_template(self) -> str:
+        """Get the results dashboard HTML template."""
+        return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - Smart Chunking</title>
     <style>
         * {
             margin: 0;
@@ -203,12 +968,57 @@ class LogAnalysisWebServer:
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .header h1 {
             color: #2c3e50;
             margin-bottom: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
         }
         
         .metrics {
@@ -286,42 +1096,6 @@ class LogAnalysisWebServer:
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-        
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #229954;
         }
         
         .results-container {
@@ -573,6 +1347,11 @@ class LogAnalysisWebServer:
                 padding: 10px;
             }
             
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
             .filter-group {
                 grid-template-columns: 1fr;
             }
@@ -597,8 +1376,13 @@ class LogAnalysisWebServer:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 Log Analysis Dashboard</h1>
-            <p>Interactive analysis results viewer</p>
+            <div>
+                <h1>🔍 Analysis Results</h1>
+                <p>Interactive log analysis dashboard</p>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="btn btn-primary">← New Analysis</a>
+            </div>
         </div>
         
         <div class="metrics" id="metrics">
@@ -1013,12 +1797,12 @@ class LogAnalysisWebServer:
     </script>
 </body>
 </html>"""
-    
+
     def run(self, debug: bool = False):
         """Run the Flask web server."""
-        print(f"Starting Log Analysis Web Server...")
-        print(f"Dashboard will be available at: http://{self.host}:{self.port}")
-        print(f"Results file: {self.results_path}")
+        print(f"Starting Smart Chunking Web Server...")
+        print(f"Landing page will be available at: http://{self.host}:{self.port}")
+        print(f"Results will be saved to: {self.results_path}")
         print(f"Press Ctrl+C to stop the server")
         
         self.app.run(host=self.host, port=self.port, debug=debug)

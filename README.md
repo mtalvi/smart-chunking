@@ -24,6 +24,7 @@
 ```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+pip install flask  # For web interface
 ```
 
 ### 2. Configure LLM Provider (Optional but Recommended)
@@ -59,30 +60,50 @@ EOF
 
 See **[LLM Configuration Guide](docs/llm-integration/llm_configuration.md)** for all supported providers.
 
-### 3. Run Complete Analysis with Solution Engine
+### 3. Start Web Interface (Recommended)
+```bash
+# Start the web server
+python start_web_server.py
+
+# Open http://127.0.0.1:5000 in your browser
+# 1. Paste logs or upload a file
+# 2. Click "Analyze" 
+# 3. View interactive results with AI solutions
+```
+
+### 4. Alternative: Command Line Usage
 ```bash
 # Full analysis with hybrid solution engine (pattern + LLM)
-python -m src.main --input test_logs/ --detector hybrid --output analysis_with_solutions.json
+python -m src.main --input your_logs.txt --detector hybrid --output analysis.json
 
-# View solutions in interactive web dashboard
-python serve_results.py --results analysis_with_solutions.json
-
-# Generate HTML report with solutions
-python serve_results.py --results analysis_with_solutions.json --format html --output solutions_report.html
+# View results in interactive web dashboard
+python serve_results.py --results analysis.json --format web
 ```
 
 ## 🔧 **Usage Examples**
 
-### **Core Log Analysis**
+### **Web Interface (Recommended)**
+```bash
+# Start the web server
+python start_web_server.py --port 5000
+
+# Then open http://127.0.0.1:5000 and:
+# 1. Paste your logs directly in the text area, OR
+# 2. Upload a .txt/.log file
+# 3. Click "Analyze" to run hybrid detection (95% accuracy)
+# 4. View results with AI-powered solutions instantly
+```
+
+### **Command Line Usage**
 ```bash
 # Pattern-based detection (fastest)
 python -m src.main --input logs/ --detector pattern --output results.json
 
 # Hybrid ML detection (most accurate - 95%)
-python -m src.main --input logs/ --detector hybrid --enable-clustering --output analysis_report.html
+python -m src.main --input logs/ --detector hybrid --enable-clustering --output analysis.json
 
-# View results in web dashboard
-python serve_results.py --format html
+# View existing results in web dashboard
+python serve_results.py --results analysis.json --format web
 ```
 
 ### **Natural Language Alert Creation** (New!)

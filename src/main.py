@@ -85,59 +85,146 @@ def create_detector(detector_type: str, confidence_threshold: float, config_path
             config_path=config_path
         )
     elif detector_type == 'semantic':
-        try:
-            detector = SemanticDetector(
-                confidence_threshold=confidence_threshold,
-                config_path=config_path
-            )
-        except ImportError as e:
-            logger.error("Semantic detector requires sentence-transformers. Install with: pip install sentence-transformers")
-            sys.exit(1)
+        detector = SemanticDetector(
+            confidence_threshold=confidence_threshold,
+            config_path=config_path
+        )
+    elif detector_type == 'hybrid':
+        detector = HybridDetector(
+            confidence_threshold=confidence_threshold,
+            config_path=config_path,
+            require_consensus=kwargs.get('require_consensus', False),
+            enable_zeroshot=kwargs.get('enable_zeroshot', True) and ZEROSHOT_AVAILABLE,
+            enable_statistical=kwargs.get('enable_statistical', True) and STATISTICAL_AVAILABLE
+        )
     elif detector_type == 'zeroshot':
         if not ZEROSHOT_AVAILABLE:
-            logger.error("Zero-shot classifier requires transformers. Install with: pip install transformers")
+            logger.error("Zero-shot detector not available. Install transformers and torch.")
             sys.exit(1)
-        try:
-            detector = ZeroShotErrorClassifier(
-                confidence_threshold=confidence_threshold
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize zero-shot classifier: {e}")
-            sys.exit(1)
+        detector = ZeroShotErrorClassifier(
+            confidence_threshold=confidence_threshold,
+            config_path=config_path
+        )
     elif detector_type == 'statistical':
         if not STATISTICAL_AVAILABLE:
-            logger.error("Statistical detector requires numpy and scipy. Install with: pip install numpy scipy")
+            logger.error("Statistical detector not available. Install required ML dependencies.")
             sys.exit(1)
-        try:
-            detector = StatisticalAnomalyDetector(
-                confidence_threshold=confidence_threshold,
-                z_threshold=kwargs.get('z_threshold', 3.0),
-                min_samples=kwargs.get('min_samples', 5)
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize statistical detector: {e}")
-            sys.exit(1)
-    elif detector_type == 'hybrid':
-        try:
-            # Enhanced hybrid detector with new ML capabilities
-            detector = HybridDetector(
-                confidence_threshold=confidence_threshold,
-                config_path=config_path,
-                enable_zeroshot=kwargs.get('enable_zeroshot', True),
-                enable_statistical=kwargs.get('enable_statistical', True),
-                require_consensus=kwargs.get('require_consensus', False)
-            )
-        except ImportError as e:
-            logger.warning("Hybrid detector falling back to pattern-only mode due to missing dependencies")
-            detector = PatternDetector(
-                confidence_threshold=confidence_threshold,
-                config_path=config_path
-            )
+        detector = StatisticalAnomalyDetector(
+            confidence_threshold=confidence_threshold,
+            config_path=config_path,
+            z_threshold=kwargs.get('z_threshold', 3.0),
+            min_samples=kwargs.get('min_samples', 5)
+        )
     else:
-        raise ValueError(f"Unknown detector type: {detector_type}. "
-                        f"Available types: pattern, semantic, zeroshot, statistical, hybrid")
+        logger.error(f"Unknown detector type: {detector_type}")
+        sys.exit(1)
+    
+    # Wrap with clustering if enabled
+    if enable_clustering and CLUSTERING_AVAILABLE:
+        from src.processors.clusterer import ErrorClusterer
+        clusterer = ErrorClusterer(
+            eps=kwargs.get('clustering_eps', 0.3),
+            min_samples=kwargs.get('clustering_min_samples', 2)
+        )
+        detector = clusterer.wrap_detector(detector)
+    elif enable_clustering:
+        logger.warning("Clustering requested but not available. Install scikit-learn.")
     
     return detector
+
+
+def run_analysis_programmatic(input_path: str, detector_type: str = 'hybrid',
+                            confidence_threshold: float = 0.7, config_path: str = None,
+                            enable_clustering: bool = False, context_before: int = 5,
+                            context_after: int = 10, parallel_workers: int = None,
+                            verbose: bool = False, **kwargs) -> AnalysisResults:
+    """
+    Run analysis programmatically without CLI.
+    
+    Args:
+        input_path: Path to input file or directory
+        detector_type: Type of detector to use
+        confidence_threshold: Minimum confidence threshold
+        config_path: Path to configuration file
+        enable_clustering: Whether to enable clustering
+        context_before: Lines of context before error
+        context_after: Lines of context after error  
+        parallel_workers: Number of parallel workers
+        verbose: Enable verbose logging
+        **kwargs: Additional detector-specific arguments
+        
+    Returns:
+        AnalysisResults object with detected errors
+    """
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    # Setup GPU acceleration if available
+    setup_spacy_gpu()
+    
+    # Create detector with enhanced ML options
+    logger.info(f"Initializing {detector_type} detector with confidence threshold {confidence_threshold}")
+    detector_kwargs = {
+        'z_threshold': kwargs.get('z_threshold', 3.0),
+        'min_samples': kwargs.get('min_samples', 5),
+        'require_consensus': kwargs.get('require_consensus', False),
+        'enable_zeroshot': kwargs.get('enable_zeroshot', True),
+        'enable_statistical': kwargs.get('enable_statistical', True),
+        'clustering_eps': kwargs.get('clustering_eps', 0.3),
+        'clustering_min_samples': kwargs.get('clustering_min_samples', 2)
+    }
+    
+    detector = create_detector(
+        detector_type=detector_type,
+        confidence_threshold=confidence_threshold,
+        config_path=config_path,
+        enable_clustering=enable_clustering,
+        **detector_kwargs
+    )
+    
+    # Create context extractor
+    context_extractor = ContextExtractor(
+        context_before=context_before,
+        context_after=context_after
+    )
+    
+    # Create stream processor
+    processor = StreamProcessor(
+        detector=detector,
+        context_extractor=context_extractor,
+        parallel_workers=parallel_workers
+    )
+    
+    # Process input
+    input_path_obj = Path(input_path)
+    start_time = time.time()
+    
+    if input_path_obj.is_file():
+        logger.info(f"Processing single file: {input_path}")
+        results = processor.process_files([str(input_path_obj)], show_progress=False)
+    elif input_path_obj.is_dir():
+        logger.info(f"Processing directory: {input_path}")
+        results = processor.process_directory(
+            directory_path=str(input_path_obj),
+            pattern='*.{log,txt}',
+            recursive=True,
+            show_progress=False
+        )
+    else:
+        raise ValueError(f"Input path is neither a file nor directory: {input_path}")
+    
+    # Deduplicate results
+    if results.results:
+        original_count = len(results.results)
+        results.deduplicate()
+        dedup_count = len(results.results)
+        if original_count != dedup_count:
+            logger.info(f"Deduplicated {original_count - dedup_count} duplicate results")
+    
+    processing_time = time.time() - start_time
+    logger.info(f"Analysis completed in {processing_time:.2f} seconds")
+    
+    return results
 
 
 def save_results(results: AnalysisResults, output_path: str, output_format: str):
