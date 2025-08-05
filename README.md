@@ -1,9 +1,9 @@
 > [!NOTE]
 > This project was developed with assistance from AI tools.
 
-# Smart-Chunking + Llama 3.1: Ansible Log Monitoring System
+# Smart-Chunking: Ansible Log Monitoring System
 
-**Enterprise-grade log analysis with ML-enhanced error detection and natural language alerting capabilities.**
+**Enterprise-grade log analysis with ML-enhanced error detection and LLM-powered solution generation.**
 
 🎯 **Perfect for:** Ansible automation engineers, SREs, and DevOps teams who need intelligent, contextual alerting for playbook executions.
 
@@ -12,7 +12,7 @@
 - **✅ 100% Solution Coverage**: Every detected error gets actionable troubleshooting guidance
 - **⚡ Hybrid Solution Engine**: Pattern-based (instant) + LLM fallback (30s) for unknown errors
 - **🎯 95% Detection Accuracy**: Hybrid ML approach combining pattern, semantic, and statistical analysis
-- **🤖 Local Llama 3.1 Integration**: Zero-cost LLM for natural language analysis and solution generation
+- **🤖 Flexible LLM Integration**: Support for OpenAI, Azure OpenAI, local models, and any OpenAI-compatible API
 - **📊 Intelligent Retry Aggregation**: Multiple "RETRYING" logs → single actionable summary
 - **🔧 240+ Ansible Patterns**: Pre-configured error detection + troubleshooting solutions
 - **🌐 Interactive Web Dashboard**: View errors, solutions, and context in beautiful interface
@@ -26,17 +26,38 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 
-### 2. Install Ollama for LLM Features (Optional but Recommended)
+### 2. Configure LLM Provider (Optional but Recommended)
+
+**Option A: OpenAI/Azure OpenAI**
+```bash
+# Create .env file with your API credentials
+cat > .env << 'EOF'
+API_KEY=your-api-key-here
+MODEL_NAME=gpt-3.5-turbo
+ENDPOINT_URL=https://api.openai.com/v1
+EOF
+```
+
+**Option B: Local Ollama**
 ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Pull Llama 3.1 model (4.7GB)
+# Pull a model (4.7GB)
 ollama pull llama3.1:8b-instruct-q4_0
 
 # Start Ollama server
 ollama serve
+
+# Configure for Ollama
+cat > .env << 'EOF'
+API_KEY=ollama
+MODEL_NAME=llama3.1:8b-instruct-q4_0
+ENDPOINT_URL=http://localhost:11434/v1
+EOF
 ```
+
+See **[LLM Configuration Guide](docs/llm-integration/llm_configuration.md)** for all supported providers.
 
 ### 3. Run Complete Analysis with Solution Engine
 ```bash
@@ -142,7 +163,7 @@ weights:
 ### **💡 Solution Engine** (`src/solutions/`) - ✨ **NEW**
 - **`engine.py`** - Hybrid solution orchestrator (pattern + LLM)
 - **`pattern_matcher.py`** - Fast regex-based solution lookup from patterns
-- **`llm_generator.py`** - Llama 3.1 fallback for unknown errors
+- **`llm_generator.py`** - OpenAI-compatible LLM fallback for unknown errors
 - **100% Coverage**: Every error gets actionable troubleshooting steps
 
 ### **📊 Reporting & Visualization**
@@ -161,10 +182,11 @@ weights:
 - **Context Extraction**: Rich before/after line capture
 
 ### **LLM Integration:**
-- **Cost**: $0 (local Llama 3.1 vs $21+/month cloud APIs)
-- **Privacy**: Complete local processing
+- **Flexibility**: OpenAI, Azure OpenAI, local models, or any OpenAI-compatible API
+- **Cost Options**: Free (local) to paid (cloud APIs) based on your choice
+- **Privacy**: Complete local processing available with local models
 - **Response Time**: <30 seconds for enhanced alerts
-- **Model**: Llama 3.1 8B parameters (4.7GB quantized)
+- **Model Support**: Any OpenAI-compatible model (GPT-3.5/4, Llama, Mistral, etc.)
 
 ## 🎯 **Use Cases**
 
@@ -199,7 +221,7 @@ This system serves as the foundation for a complete **Ansible Log Monitoring Sys
 - ✅ **Hybrid Solution Engine**: Pattern-based + LLM fallback architecture  
 - ✅ **89.9% Critical Error Accuracy**: High-confidence ROSA admin solution
 - ✅ **Retry Aggregation**: Intelligent noise reduction for verbose logs
-- ✅ **Local Llama 3.1 Integration**: Zero-cost LLM deployment working
+- ✅ **Flexible LLM Integration**: OpenAI-compatible API support with local/cloud options
 - ✅ **Interactive Web Dashboard**: Beautiful solution viewing interface
 - ✅ **Production-Ready Codebase**: Clean, documented, enterprise-grade
 
@@ -212,8 +234,9 @@ This system serves as the foundation for a complete **Ansible Log Monitoring Sys
 
 ## 📚 **Documentation**
 
+- **[LLM Configuration Guide](docs/llm-integration/llm_configuration.md)** - Complete setup for all LLM providers
 - **[Integration Success](docs/llm-integration/llama_integration_success.md)** - LLM integration validation
-- **[LLM Integration Plan](docs/llm-integration/llm_integration_plan.md)** - Llama 3.1 strategy and setup
+- **[LLM Integration Plan](docs/llm-integration/llm_integration_plan.md)** - LLM strategy and setup
 - **[Project Artifacts](docs/project_artifacts_summary.md)** - Complete documentation index
 
 ## 🤝 **Contributing**
@@ -226,4 +249,4 @@ This is an investigation/foundation project that has successfully validated the 
 
 ---
 
-**🎯 Bottom Line**: Smart-chunking provides 95% accurate Ansible log detection + free Llama 3.1 integration delivers complete natural language alerting capabilities at zero LLM operational cost. 
+**🎯 Bottom Line**: Smart-chunking provides 95% accurate Ansible log detection + flexible LLM integration (local or cloud) delivers intelligent solution generation with your choice of cost model. 

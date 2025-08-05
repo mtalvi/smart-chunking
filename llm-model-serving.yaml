@@ -1,0 +1,62 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: test-mistral-7b
+  namespace: mtalvi-alm
+  annotations:
+    serving.knative.dev/creator: "mtalvi"
+    serving.knative.dev/lastModifier: "mtalvi"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 2
+    scaleTarget: 70
+    model:
+      modelFormat:
+        name: caikit
+      runtime: caikit-tgis-runtime
+      storageUri: "git://github.com/huggingface/transformers"
+      resources:
+        requests:
+          cpu: "2"
+          memory: "16Gi"
+          nvidia.com/gpu: "1"  # Use single L40S GPU (46GB)
+        limits:
+          cpu: "3"
+          memory: "24Gi"
+          nvidia.com/gpu: "1"
+      env:
+        - name: MAX_SEQUENCE_LENGTH
+          value: "8192"   # 8K context window
+        - name: MAX_NEW_TOKENS
+          value: "2048"   # Max tokens to generate
+        - name: TENSOR_PARALLEL_SIZE
+          value: "1"      # Use single GPU
+        - name: GPU_MEMORY_UTILIZATION
+          value: "0.85"   # Use 85% of GPU memory  
+        - name: TRUST_REMOTE_CODE
+          value: "true"
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+              optional: true
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Equal
+        value: SHARED_L40S
+        effect: NoSchedule
+    nodeSelector:
+      nvidia.com/gpu.product: NVIDIA-L40S
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hf-token-secret
+  namespace: mtalvi-alm
+type: Opaque
+data:
+  # Add your HuggingFace token here (base64 encoded)
+  # For now, we'll try without token for public access
+  token: "" 

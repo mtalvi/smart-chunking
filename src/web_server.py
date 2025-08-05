@@ -484,6 +484,90 @@ class LogAnalysisWebServer:
             margin: 20px 0;
         }
         
+        .solutions-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+
+        .solutions-section h4 {
+            color: #28a745;
+            margin: 0 0 10px 0;
+            font-size: 1em;
+        }
+
+        .solution-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        .solution-item .source-badge {
+            background: #17a2b8;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75em;
+        }
+
+        .solution-item .confidence-badge {
+            background: #ffc107;
+            color: #212529;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin-left: 5px;
+        }
+
+        .solution-item .category-time {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .solution-item ol {
+            margin: 0;
+            color: #495057;
+        }
+
+        .solution-item li {
+            margin-bottom: 5px;
+        }
+
+        .no-solutions {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        
+        .log-description {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            border-radius: 5px;
+        }
+
+        .log-description h5 {
+            color: #2980b9;
+            margin: 0 0 8px 0;
+            font-size: 0.9em;
+        }
+
+        .log-description p {
+            margin: 0;
+            color: #34495e;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -728,6 +812,60 @@ class LogAnalysisWebServer:
                     }
                 }
                 
+                // Build solutions HTML
+                let solutionsHtml = '';
+                if (result.solutions && result.solutions.length > 0) {
+                    solutionsHtml = '<div class="solutions-section">';
+                    solutionsHtml += `<h4>🔧 Solutions (${result.solutions.length})</h4>`;
+                    
+                    // Add log description if available (from first solution since all solutions share the same description)
+                    const logDescription = result.solutions[0].log_description;
+                    if (logDescription && logDescription.trim()) {
+                        solutionsHtml += `
+                            <div class="log-description" style="margin-bottom: 15px; padding: 12px; background: #e8f4fd; border-left: 4px solid #3498db; border-radius: 5px;">
+                                <h5 style="color: #2980b9; margin: 0 0 8px 0; font-size: 0.9em;">📋 Log Context Analysis</h5>
+                                <p style="margin: 0; color: #34495e; font-size: 0.9em; line-height: 1.4;">${escapeHtml(logDescription)}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    result.solutions.forEach((solution, solIndex) => {
+                        const sourceIcon = solution.type === 'llm_generated' ? '🤖' : '📋';
+                        const sourceText = solution.type === 'llm_generated' ? 'AI Generated' : 'Pattern Based';
+                        
+                        solutionsHtml += `
+                            <div class="solution-item">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: #2c3e50;">${solution.title}</strong>
+                                    <div>
+                                        <span class="source-badge">${sourceIcon} ${sourceText}</span>
+                                        <span class="confidence-badge">
+                                            ${(solution.confidence * 100).toFixed(0)}% confidence
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="category-time">
+                                    Category: ${solution.category || 'General'} | 
+                                    Est. Time: ${solution.estimated_fix_time || 'Unknown'}
+                                </div>
+                        `;
+                        
+                        if (solution.steps && solution.steps.length > 0) {
+                            solutionsHtml += '<ol>';
+                            solution.steps.forEach(step => {
+                                solutionsHtml += `<li style="margin-bottom: 5px;">${escapeHtml(step)}</li>`;
+                            });
+                            solutionsHtml += '</ol>';
+                        }
+                        
+                        solutionsHtml += '</div>';
+                    });
+                    
+                    solutionsHtml += '</div>';
+                } else if (result.solution_source === 'none') {
+                    solutionsHtml = '<div class="no-solutions">⚠️ No solutions available for this error</div>';
+                }
+                
                 return `
                     <div class="result-item">
                         <div class="result-header">
@@ -747,6 +885,7 @@ class LogAnalysisWebServer:
                         <div class="original-line">${escapeHtml(result.original_line)}</div>
                         ${contextHtml ? `<button class="context-toggle" onclick="toggleContext(${globalIndex})">Show Context</button>` : ''}
                         ${contextHtml}
+                        ${solutionsHtml}
                     </div>
                 `;
             }).join('');

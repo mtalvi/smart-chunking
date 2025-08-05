@@ -1,35 +1,47 @@
 """
 LLM-based solution generator for Ansible log analysis.
 
-This module provides intelligent solution generation using Llama 3.1 for unknown/complex errors.
+This module provides intelligent solution generation using OpenAI API for unknown/complex errors.
 Part of the Hybrid Troubleshooting Support Strategy (ADR-001 Decision #6).
 """
 
-import requests
+import os
 import json
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
 class LLMSolutionGenerator:
     """LLM-powered solution generation for unknown/complex errors."""
     
-    def __init__(self, ollama_url: str = "http://localhost:11434", 
-                 model_name: str = "llama3.1:8b-instruct-q4_0",
-                 timeout: int = 30):
+    def __init__(self, timeout: int = 30):
         """
-        Initialize the LLM solution generator.
+        Initialize the LLM solution generator using environment variables.
         
+        Environment Variables:
+            ENDPOINT_URL: OpenAI API endpoint URL (defaults to OpenAI's API)
+            API_KEY: OpenAI API key
+            MODEL_NAME: Model name to use (e.g., gpt-3.5-turbo, gpt-4, mistral-small-24b-w8a8)
+            
         Args:
-            ollama_url: URL of the Ollama server
-            model_name: Name of the LLM model to use
             timeout: Request timeout in seconds
         """
-        self.ollama_url = ollama_url
-        self.model_name = model_name
+        self.endpoint_url = os.getenv('ENDPOINT_URL', 'https://api.openai.com/v1')
+        self.api_key = os.getenv('API_KEY')
+        self.model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
         self.timeout = timeout
+        
+        # Initialize OpenAI client
+        self.client = None
+        if self.api_key:
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.endpoint_url,
+                timeout=timeout
+            )
         
         self.stats = {
             'solutions_generated': 0,
@@ -43,33 +55,34 @@ class LLMSolutionGenerator:
         self.is_available = self._test_connection()
     
     def _test_connection(self) -> bool:
-        """Test connection to Ollama server."""
+        """Test connection to OpenAI API."""
+        if not self.client or not self.api_key:
+            logger.warning("OpenAI API key not provided - LLM solutions disabled")
+            return False
+            
         try:
-            response = requests.get(f"{self.ollama_url}/api/tags", timeout=5)
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [model['name'] for model in models]
-                
-                if self.model_name in model_names:
-                    logger.info(f"LLM solution generator initialized: {self.model_name} available")
-                    return True
-                else:
-                    logger.warning(f"Model {self.model_name} not found. Available models: {model_names}")
-                    return False
+            # Test with a minimal request
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=5,
+                timeout=5
+            )
+            
+            if response and response.choices:
+                logger.info(f"LLM solution generator initialized: {self.model_name} available")
+                return True
             else:
-                logger.warning(f"Ollama server not responding properly: {response.status_code}")
+                logger.warning("OpenAI API not responding properly")
                 return False
                 
-        except requests.exceptions.ConnectionError:
-            logger.warning("Ollama server not available - LLM solutions disabled")
-            return False
         except Exception as e:
-            logger.warning(f"Error testing LLM connection: {e}")
+            logger.warning(f"Error testing OpenAI connection: {e}")
             return False
     
     def generate_solutions(self, detection_result: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Generate solutions using LLM for detection results.
+        Generate solutions using OpenAI API for detection results.
         
         Args:
             detection_result: Detection result from smart-chunking system
@@ -110,14 +123,13 @@ class LLMSolutionGenerator:
             
             return solutions
             
-        except requests.exceptions.Timeout:
-            logger.warning("LLM request timeout - CPU processing taking too long")
-            self.stats['timeouts'] += 1
-            return self._get_fallback_solutions(detection_result)
-            
         except Exception as e:
-            logger.warning(f"LLM solution generation failed: {e}")
-            self.stats['failed_requests'] += 1
+            if "timeout" in str(e).lower():
+                logger.warning("LLM request timeout - processing taking too long")
+                self.stats['timeouts'] += 1
+            else:
+                logger.warning(f"LLM solution generation failed: {e}")
+                self.stats['failed_requests'] += 1
             return self._get_fallback_solutions(detection_result)
     
     def _create_solution_prompt(self, error_line: str, error_type: str, 
@@ -136,13 +148,14 @@ class LLMSolutionGenerator:
             context_info += f"Context after error:\n{chr(10).join(context_after[:2])}\n\n"
         
         # Create solution-focused prompt
-        prompt = f"""You are an expert Ansible troubleshooter. Analyze this error and provide 2-3 specific, actionable solutions.
+        prompt = f"""You are an expert Ansible troubleshooter. Analyze this error and the surrounding log context, then provide both a description of what's happening and 2-3 specific, actionable solutions.
 
 {context_info}Error Type: {error_type}
 Detection Confidence: {confidence*100:.1f}%
 
-Provide solutions in this EXACT JSON format:
+Provide your analysis in this EXACT JSON format:
 {{
+  "log_description": "A clear explanation of what was happening in the log when this error occurred, including the context and sequence of events",
   "solutions": [
     {{
       "title": "Most Likely Solution Title",
@@ -159,8 +172,9 @@ Provide solutions in this EXACT JSON format:
 }}
 
 Focus on:
+- Log Description: Explain the sequence of events, what task was running, and why this error occurred
 - Actionable steps with specific commands
-- Root cause analysis based on the error
+- Root cause analysis based on the error and context
 - Time estimates for each solution
 - High confidence scores for well-known fixes
 
@@ -169,35 +183,37 @@ JSON response only:"""
         return prompt
     
     def _call_llm_for_solutions(self, prompt: str) -> List[Dict[str, Any]]:
-        """Call LLM API to generate solutions."""
-        request_payload = {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": 0.2,  # Lower temperature for more focused responses
-                "num_ctx": 4096,     # Context window
-                "num_predict": 800,  # Limit response length
-                "top_p": 0.9,
-                "repeat_penalty": 1.1
-            }
-        }
-        
-        response = requests.post(
-            f"{self.ollama_url}/api/generate",
-            json=request_payload,
-            timeout=self.timeout
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f"LLM API error: {response.status_code}")
-        
-        result = response.json()
-        llm_response = result.get('response', '').strip()
-        
-        # Parse JSON response
-        solutions = self._parse_llm_response(llm_response)
-        return solutions
+        """Call OpenAI API to generate solutions."""
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": "You are an expert Ansible troubleshooter. Always respond with valid JSON only."
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ],
+                max_tokens=800,
+                temperature=0.2,
+                top_p=0.9,
+                timeout=self.timeout
+            )
+            
+            if not response.choices:
+                raise Exception("No response from OpenAI API")
+            
+            llm_response = response.choices[0].message.content.strip()
+            
+            # Parse JSON response
+            solutions = self._parse_llm_response(llm_response)
+            return solutions
+            
+        except Exception as e:
+            raise Exception(f"OpenAI API error: {e}")
     
     def _parse_llm_response(self, llm_response: str) -> List[Dict[str, Any]]:
         """Parse LLM JSON response into solutions."""
@@ -211,13 +227,15 @@ JSON response only:"""
                 parsed = json.loads(json_str)
                 
                 solutions = parsed.get('solutions', [])
+                log_description = parsed.get('log_description', '')
                 
-                # Enhance solutions with LLM metadata
+                # Enhance solutions with LLM metadata and log description
                 for solution in solutions:
                     solution.update({
                         'type': 'llm_generated',
-                        'source': 'llama3.1',
-                        'generated_at': datetime.now().isoformat()
+                        'source': self.model_name,
+                        'generated_at': datetime.now().isoformat(),
+                        'log_description': log_description  # Add log description to each solution
                     })
                 
                 return solutions
@@ -254,7 +272,7 @@ JSON response only:"""
                 'steps': steps[:5],  # Limit to 5 steps
                 'category': 'llm_general',
                 'type': 'llm_generated',
-                'source': 'llama3.1_fallback',
+                'source': f'{self.model_name}_fallback',
                 'estimated_fix_time': '10-20 minutes'
             }]
         
@@ -335,6 +353,7 @@ JSON response only:"""
         return {
             'is_available': self.is_available,
             'model_name': self.model_name,
+            'endpoint_url': self.endpoint_url,
             'solutions_generated': self.stats['solutions_generated'],
             'successful_requests': self.stats['successful_requests'],
             'failed_requests': self.stats['failed_requests'],

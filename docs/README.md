@@ -18,10 +18,15 @@ Welcome to the Smart-Chunking + Llama 3.1 project documentation!
 ## 🤖 **LLM Integration**
 
 ### [`llm-integration/`](llm-integration/)
-- **[Llama 3.1 Integration Plan](llm-integration/llm_integration_plan.md)**
-  - Complete Llama 3.1 integration strategy
-  - Cost analysis and setup instructions
-  - Technical implementation approach
+- **[LLM Configuration Guide](llm-integration/llm_configuration.md)** ⭐ **START HERE**
+  - Complete setup for all LLM providers (OpenAI, Azure, local models)
+  - Environment variable configuration with `.env` examples
+  - Provider-specific setup instructions and troubleshooting
+
+- **[LLM Integration Plan](llm-integration/llm_integration_plan.md)**
+  - Complete LLM integration strategy and approach
+  - Cost analysis and deployment options
+  - Technical implementation details
 
 - **[Integration Success Documentation](llm-integration/llama_integration_success.md)**
   - Validation results and test outcomes
@@ -50,9 +55,10 @@ Welcome to the Smart-Chunking + Llama 3.1 project documentation!
 3. Check [Development Plan](architecture/development_plan.md) for timeline and resources
 
 ### **For Development Team:**
-1. Read [Development Plan](architecture/development_plan.md) for implementation roadmap
-2. Review [LLM Integration Plan](llm-integration/llm_integration_plan.md) for technical setup
-3. Check [Integration Success](llm-integration/llama_integration_success.md) for current status
+1. Start with [LLM Configuration Guide](llm-integration/llm_configuration.md) for environment setup
+2. Read [Development Plan](architecture/development_plan.md) for implementation roadmap
+3. Review [LLM Integration Plan](llm-integration/llm_integration_plan.md) for technical details
+4. Check [Integration Success](llm-integration/llama_integration_success.md) for current status
 
 ### **For Technical Review:**
 1. Start with [ADR-001](architecture/ADR-001-ansible-log-monitoring-architecture.md) for complete technical context

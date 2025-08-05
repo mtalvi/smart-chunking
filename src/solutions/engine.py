@@ -24,17 +24,19 @@ class HybridSolutionEngine:
     
     def __init__(self, 
                  config_path: str = "config/patterns.yaml",
-                 enable_llm: bool = True,
-                 ollama_url: str = "http://localhost:11434",
-                 model_name: str = "llama3.1:8b-instruct-q4_0"):
+                 enable_llm: bool = True):
         """
         Initialize the hybrid solution engine.
         
         Args:
             config_path: Path to patterns configuration file
             enable_llm: Whether to enable LLM solution generation
-            ollama_url: URL of Ollama server for LLM
-            model_name: LLM model name
+            
+        Note:
+            LLM configuration is loaded from environment variables:
+            - ENDPOINT_URL: OpenAI API endpoint (defaults to OpenAI's API)
+            - API_KEY: OpenAI API key (required for LLM functionality)
+            - MODEL_NAME: Model name (defaults to gpt-3.5-turbo)
         """
         self.config_path = config_path
         self.enable_llm = enable_llm
@@ -46,7 +48,7 @@ class HybridSolutionEngine:
         self.llm_generator = None
         if enable_llm:
             try:
-                self.llm_generator = LLMSolutionGenerator(ollama_url, model_name)
+                self.llm_generator = LLMSolutionGenerator()
                 if not self.llm_generator.is_available:
                     logger.warning("LLM not available - using pattern-only mode")
             except Exception as e:

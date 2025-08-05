@@ -9,6 +9,14 @@ from pathlib import Path
 from typing import Optional
 import logging
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # This loads .env file into os.environ
+except ImportError:
+    # dotenv not available, environment variables must be set manually
+    pass
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
