@@ -1,4 +1,4 @@
-# Smart-Chunking Detection Engine - OpenShift Deployment
+# Smart-Chunking Web-based Log Analysis - OpenShift Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +6,7 @@ metadata:
   namespace: mtalvi-alm
   labels:
     app: smart-chunking-engine
-    component: detection
+    component: web-analysis
 spec:
   replicas: 2
   selector:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: smart-chunking-engine
-        component: detection
+        component: web-analysis
     spec:
       # Handle GPU node taints (your nodes have nvidia.com/gpu=SHARED_L40S:NoSchedule)
       tolerations:
@@ -28,25 +28,51 @@ spec:
       nodeSelector:
         nvidia.com/gpu.present: "true"
       containers:
-      - name: detection-engine
-        image: quay.io/rh-ee-mtalvi/smart-chunking-engine:v1.0
+      - name: analysis-engine
+        image: quay.io/rh-ee-mtalvi/smart-chunking-engine:v2.0.3
         ports:
         - containerPort: 8080
           name: http
         env:
+        # System environment
         - name: PYTHONPATH
           value: "/app"
         - name: TRANSFORMERS_CACHE
           value: "/app/.cache/transformers"
         - name: HF_HOME
           value: "/app/.cache/huggingface"
+        - name: FLASK_HOST
+          value: "0.0.0.0"
+        - name: FLASK_PORT
+          value: "8080"
+        
+        # LLM Configuration - Load from secret
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llm-config-secret
+              key: api-key
+              optional: false
+        - name: MODEL_NAME
+          valueFrom:
+            secretKeyRef:
+              name: llm-config-secret
+              key: model-name
+              optional: true
+        - name: ENDPOINT_URL
+          valueFrom:
+            secretKeyRef:
+              name: llm-config-secret
+              key: endpoint-url
+              optional: true
+        
         resources:
           requests:
             cpu: "1"
-            memory: "3Gi"
+            memory: "4Gi"
           limits:
             cpu: "4"
-            memory: "6Gi"
+            memory: "8Gi"
         livenessProbe:
           httpGet:
             path: /
@@ -68,6 +94,8 @@ spec:
           mountPath: /app/.cache
         - name: tmp-volume
           mountPath: /tmp
+        - name: temp-logs
+          mountPath: /app/temp
       volumes:
       - name: config-volume
         configMap:
@@ -78,6 +106,24 @@ spec:
       - name: tmp-volume
         emptyDir:
           sizeLimit: 2Gi
+      - name: temp-logs
+        emptyDir:
+          sizeLimit: 1Gi
+---
+# Secret for LLM Configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: llm-config-secret
+  namespace: mtalvi-alm
+  labels:
+    app: smart-chunking-engine
+type: Opaque
+stringData:
+  # Update these values with your actual LLM configuration
+  api-key: "your-api-key-here"  # Replace with actual API key
+  model-name: "gpt-3.5-turbo"   # Or your preferred model
+  endpoint-url: "https://api.openai.com/v1"  # Or your LLM endpoint
 ---
 # Service for Smart-Chunking Engine
 apiVersion: v1
@@ -105,6 +151,8 @@ metadata:
   namespace: mtalvi-alm
   labels:
     app: smart-chunking-engine
+  annotations:
+    haproxy.router.openshift.io/timeout: "300s"  # 5 minute timeout for analysis
 spec:
   to:
     kind: Service

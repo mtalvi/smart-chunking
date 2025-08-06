@@ -187,7 +187,7 @@ class LogAnalysisWebServer:
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-
+        
         @self.app.route('/api/results')
         def api_results():
             """API endpoint for results data with filtering."""
@@ -1797,7 +1797,7 @@ class LogAnalysisWebServer:
     </script>
 </body>
 </html>"""
-
+    
     def run(self, debug: bool = False):
         """Run the Flask web server."""
         print(f"Starting Smart Chunking Web Server...")
@@ -1812,17 +1812,3 @@ def start_web_server(results_path: str = "results.json", port: int = 5000, host:
     """Start the web server with the given configuration."""
     server = LogAnalysisWebServer(results_path, port, host)
     server.run(debug)
-
-
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Start log analysis web server")
-    parser.add_argument("--results", default="results.json", help="Results JSON file path")
-    parser.add_argument("--port", type=int, default=5000, help="Port to run server on")
-    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
-    parser.add_argument("--debug", action="store_true", help="Run in debug mode")
-    
-    args = parser.parse_args()
-    
-    start_web_server(args.results, args.port, args.host, args.debug) 

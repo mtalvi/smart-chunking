@@ -85,10 +85,10 @@ def create_detector(detector_type: str, confidence_threshold: float, config_path
             config_path=config_path
         )
     elif detector_type == 'semantic':
-        detector = SemanticDetector(
-            confidence_threshold=confidence_threshold,
-            config_path=config_path
-        )
+            detector = SemanticDetector(
+                confidence_threshold=confidence_threshold,
+                config_path=config_path
+            )
     elif detector_type == 'hybrid':
         detector = HybridDetector(
             confidence_threshold=confidence_threshold,
@@ -101,20 +101,20 @@ def create_detector(detector_type: str, confidence_threshold: float, config_path
         if not ZEROSHOT_AVAILABLE:
             logger.error("Zero-shot detector not available. Install transformers and torch.")
             sys.exit(1)
-        detector = ZeroShotErrorClassifier(
+            detector = ZeroShotErrorClassifier(
             confidence_threshold=confidence_threshold,
             config_path=config_path
-        )
+            )
     elif detector_type == 'statistical':
         if not STATISTICAL_AVAILABLE:
             logger.error("Statistical detector not available. Install required ML dependencies.")
             sys.exit(1)
-        detector = StatisticalAnomalyDetector(
-            confidence_threshold=confidence_threshold,
+            detector = StatisticalAnomalyDetector(
+                confidence_threshold=confidence_threshold,
             config_path=config_path,
-            z_threshold=kwargs.get('z_threshold', 3.0),
-            min_samples=kwargs.get('min_samples', 5)
-        )
+                z_threshold=kwargs.get('z_threshold', 3.0),
+                min_samples=kwargs.get('min_samples', 5)
+            )
     else:
         logger.error(f"Unknown detector type: {detector_type}")
         sys.exit(1)

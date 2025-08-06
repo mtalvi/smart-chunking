@@ -52,8 +52,8 @@ Access the server at: http://127.0.0.1:5000 (or your specified host:port)
     
     parser.add_argument(
         "--results-file",
-        default="analysis.json",
-        help="Results file path (default: analysis.json)"
+        default="output/analysis.json",
+        help="Results file path (default: output/analysis.json)"
     )
     
     parser.add_argument(
@@ -64,6 +64,14 @@ Access the server at: http://127.0.0.1:5000 (or your specified host:port)
     
     args = parser.parse_args()
     
+    # Debug information
+    print(f"🚀 Starting Smart Chunking Web Server...")
+    print(f"📍 Host: {args.host}")
+    print(f"🔌 Port: {args.port}")
+    print(f"📄 Results file: {args.results_file}")
+    print(f"🐛 Debug mode: {args.debug}")
+    print(f"🌐 Landing page will be available at: http://{args.host}:{args.port}")
+    
     try:
         # Create and start the web server
         server = LogAnalysisWebServer(
@@ -71,6 +79,10 @@ Access the server at: http://127.0.0.1:5000 (or your specified host:port)
             port=args.port,
             host=args.host
         )
+        
+        # Verify the server was created correctly
+        print(f"✅ Web server initialized successfully")
+        print(f"📝 Server will save results to: {server.results_path}")
         
         server.run(debug=args.debug)
         
@@ -82,6 +94,9 @@ Access the server at: http://127.0.0.1:5000 (or your specified host:port)
         print("\n👋 Server stopped by user")
     except Exception as e:
         print(f"❌ Server error: {e}")
+        if args.debug:
+            import traceback
+            traceback.print_exc()
         sys.exit(1)
 
 
