@@ -245,10 +245,6 @@ The system supports any OpenAI-compatible API endpoint:
 
 This project provides a solid foundation for enterprise Ansible log monitoring. The web-based interface makes it accessible for teams of all sizes, from individual developers to large enterprise deployments.
 
-## ⚖️ **License**
-
-[Add your license here]
-
 ---
 
 **🎯 Bottom Line**: Smart-Chunking provides 95% accurate Ansible log detection through an easy-to-use web interface, with flexible LLM integration that delivers intelligent solution generation using your choice of local or cloud AI models. 
