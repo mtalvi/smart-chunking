@@ -11,7 +11,7 @@
 
 - **✅ 100% Solution Coverage**: Every detected error gets actionable troubleshooting guidance
 - **⚡ Hybrid Solution Engine**: Pattern-based (instant) + LLM fallback for unknown errors
-- **🎯 95% Detection Accuracy**: Hybrid ML approach combining pattern, semantic, and statistical analysis
+- **🎯 High Detection Accuracy**: Hybrid ML approach combining pattern, semantic, statistical, and contextual analysis
 - **🤖 Flexible LLM Integration**: Support for OpenAI, Azure OpenAI, local models, and any OpenAI-compatible API
 - **📊 Intelligent Retry Aggregation**: Multiple "RETRYING" logs → single actionable summary
 - **🔧 240+ Ansible Patterns**: Pre-configured error detection + troubleshooting solutions
@@ -79,7 +79,7 @@ The web interface is the **primary and recommended** way to use Smart-Chunking:
 
 ### **Analysis Pipeline**
 When you click "Analyze", the system automatically:
-- Processes your logs with hybrid detection (pattern + semantic + statistical)
+- Processes your logs with 4-detector hybrid analysis (pattern + semantic + statistical + contextual)
 - Applies retry aggregation to reduce repetitive "RETRYING" noise
 - Generates AI-powered solutions for each detected error
 - Saves results to `output/analysis.json`
@@ -131,16 +131,18 @@ The deployment automatically:
 ## 🏗️ **Architecture**
 
 ```
-Web Upload → Log Processing → Hybrid Detection → Solution Generation → Interactive Results
+Web Upload → Log Processing → 4-Detector Hybrid → Solution Generation → Interactive Results
      ↓              ↓               ↓                    ↓                     ↓
-  User Input    File Analysis   95% Accuracy      AI-Powered Solutions   Web Dashboard
+  User Input    File Analysis   High Accuracy      AI-Powered Solutions   Web Dashboard
 ```
 
 ### **🔍 Detection Methods** (`src/detectors/`)
-- **`pattern.py`** - Regex/keyword matching (fast, production-ready)
-- **`semantic.py`** - NLP similarity detection with sentence transformers
-- **`hybrid.py`** - **RECOMMENDED** - Combines all methods with confidence scoring
-- **`statistical.py`** - Anomaly detection for frequencies and durations
+- **`pattern.py`** - ✅ Regex/keyword matching (fast, production-ready)
+- **`semantic.py`** - ✅ NLP similarity detection with sentence transformers  
+- **`statistical.py`** - ✅ Anomaly detection for frequencies and durations
+- **`contextual.py`** - ✅ Multi-line correlation and infrastructure intelligence
+- **`hybrid.py`** - ✅ **RECOMMENDED** - Combines 4 detection methods with weighted confidence scoring
+- **`zeroshot.py`** - 🚧 Zero-shot ML classification (planned enhancement)
 
 ### **💡 Solution Engine** (`src/solutions/`)
 - **`engine.py`** - Hybrid solution orchestrator (pattern + LLM)
@@ -163,9 +165,9 @@ Web Upload → Log Processing → Hybrid Detection → Solution Generation → I
 ## 📈 **Performance & Accuracy**
 
 ### **Detection Performance:**
-- **Accuracy**: 95% (hybrid detection method)
+- **Accuracy**: High accuracy with 4-detector hybrid method (pattern + semantic + statistical + contextual)
 - **Processing Speed**: 50K+ events/second capability
-- **False Positive Rate**: <3%
+- **False Positive Rate**: Low (intelligent filtering and consensus scoring)
 - **Context Extraction**: Rich before/after line capture
 
 ### **LLM Integration:**
@@ -228,13 +230,14 @@ The system supports any OpenAI-compatible API endpoint:
 - ✅ **Web Interface**: Primary method for log analysis
 - ✅ **100% Solution Coverage**: Every error gets troubleshooting guidance
 - ✅ **Hybrid Solution Engine**: Pattern-based + LLM fallback architecture  
-- ✅ **95% Detection Accuracy**: High-confidence error detection
+- ✅ **4-Detector Hybrid**: Pattern, semantic, statistical, and contextual analysis
 - ✅ **Retry Aggregation**: Intelligent noise reduction for verbose logs
 - ✅ **Flexible LLM Integration**: OpenAI-compatible API support
 - ✅ **OpenShift Ready**: Container deployment with secret management
 - ✅ **Production-Ready**: Clean, documented, enterprise-grade codebase
 
 ### **🚀 Next Phase: Enterprise Scale-Out**
+- **Zero-shot ML Classification**: Advanced transformer-based error categorization
 - Real-time streaming integration (AMQ/Kafka)
 - AWX/AAP API connectivity and webhook integration
 - Automatic pattern learning and database updates
@@ -247,4 +250,4 @@ This project provides a solid foundation for enterprise Ansible log monitoring. 
 
 ---
 
-**🎯 Bottom Line**: Smart-Chunking provides 95% accurate Ansible log detection through an easy-to-use web interface, with flexible LLM integration that delivers intelligent solution generation using your choice of local or cloud AI models. 
+**🎯 Bottom Line**: Smart-Chunking provides highly accurate Ansible log detection through a 4-detector hybrid approach via an easy-to-use web interface, with flexible LLM integration that delivers intelligent solution generation using your choice of local or cloud AI models. 
