@@ -312,7 +312,9 @@ class LogAnalysisWebServer:
             )
             
             # Process the input file
+            logger.info(f"Processing user input file: {input_path}")
             results = processor.process_files([input_path], show_progress=False)
+            logger.info(f"Analysis completed. Found {len(results.results) if results.results else 0} errors.")
             
             # Deduplicate results
             if results.results:
@@ -327,7 +329,7 @@ class LogAnalysisWebServer:
                 try:
                     logger.info("Aggregating retry patterns...")
                     from src.processors.retry_aggregator import RetryAggregator
-                    retry_aggregator = RetryAggregator(min_retries=3)
+                    retry_aggregator = RetryAggregator(min_retries=1)
                     results = retry_aggregator.aggregate_retries(results)
                     logger.info("Retry aggregation completed")
                 except Exception as e:
@@ -338,6 +340,10 @@ class LogAnalysisWebServer:
             
             # Process each result through the solution engine
             for result in results.results:
+                # Update file path to be more user-friendly for uploaded/pasted content
+                if result.file_path.startswith('/tmp/'):
+                    result.file_path = "User Input (uploaded/pasted content)"
+                
                 # Convert result to dict format expected by solution engine
                 result_dict = {
                     'original_line': result.original_line,

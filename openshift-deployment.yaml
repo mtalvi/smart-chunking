@@ -29,7 +29,7 @@ spec:
         nvidia.com/gpu.present: "true"
       containers:
       - name: analysis-engine
-        image: quay.io/rh-ee-mtalvi/smart-chunking-engine:v2.0.3
+        image: quay.io/rh-ee-mtalvi/smart-chunking-engine:v2.1.0
         ports:
         - containerPort: 8080
           name: http

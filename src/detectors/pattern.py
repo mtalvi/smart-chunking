@@ -268,10 +268,15 @@ class PatternDetector(BaseDetector):
         if not matched_categories:
             return "unknown_error"
         
-        # Prioritize error types
+        # Prioritize error types (most specific first)
         priority_order = [
             'fatal_patterns', 'failed_patterns', 'unreachable_patterns',
             'exception_patterns', 'error_patterns', 'failure_patterns',
+            'critical_dependency_patterns',  # NEW: Critical path dependency analysis (highest priority)
+            'infrastructure_retry_patterns',  # NEW: High priority for retry detection (before general infrastructure)
+            'ssh_provisioning_patterns',     # NEW: SSH provisioning correlation
+            'boot_sequence_patterns',        # NEW: Boot sequence intelligence
+            'infrastructure_patterns',       # NEW: Infrastructure correlation patterns (general, lower priority)
             'warning_patterns',  # Added warning patterns to priority order
             'task_status', 'play_recap_errors', 'connection_errors',
             'python_traceback', 'java_stacktrace', 'generic_errors'

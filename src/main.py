@@ -612,7 +612,7 @@ Examples:
             try:
                 logger.info("Aggregating retry patterns...")
                 from src.processors import RetryAggregator
-                retry_aggregator = RetryAggregator(min_retries=3)
+                retry_aggregator = RetryAggregator(min_retries=1)
                 results = retry_aggregator.aggregate_retries(results)
                 logger.info("Retry aggregation completed")
             except Exception as e:

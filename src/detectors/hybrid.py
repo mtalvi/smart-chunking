@@ -22,6 +22,12 @@ try:
 except ImportError:
     STATISTICAL_AVAILABLE = False
 
+try:
+    from src.detectors.contextual import ContextualCorrelationDetector
+    CONTEXTUAL_AVAILABLE = True
+except ImportError:
+    CONTEXTUAL_AVAILABLE = False
+
 from src.models.results import DetectionResult
 
 
@@ -30,7 +36,7 @@ class HybridDetector(BaseDetector):
     
     def __init__(self, confidence_threshold: float = 0.7, config_path: Optional[str] = None,
                  detector_weights: Optional[Dict[str, float]] = None,
-                 enable_zeroshot: bool = True, enable_statistical: bool = True,
+                 enable_zeroshot: bool = True, enable_statistical: bool = True, enable_contextual: bool = True,
                  require_consensus: bool = False, model_name: str = 'all-MiniLM-L6-v2'):
         """
         Initialize the enhanced hybrid detector.
@@ -38,9 +44,10 @@ class HybridDetector(BaseDetector):
         Args:
             confidence_threshold: Minimum confidence score for detection
             config_path: Path to patterns configuration file
-            detector_weights: Weights for each detector type {'pattern': 0.3, 'semantic': 0.3, 'zeroshot': 0.2, 'statistical': 0.2}
+            detector_weights: Weights for each detector type {'pattern': 0.25, 'semantic': 0.25, 'zeroshot': 0.2, 'statistical': 0.1, 'contextual': 0.2}
             enable_zeroshot: Whether to enable zero-shot classification
             enable_statistical: Whether to enable statistical anomaly detection
+            enable_contextual: Whether to enable contextual correlation detection
             require_consensus: If True, multiple detectors must agree for detection
             model_name: Name of the sentence transformer model to use
         """
@@ -50,10 +57,11 @@ class HybridDetector(BaseDetector):
         # Set default weights if not provided
         if detector_weights is None:
             detector_weights = {
-                'pattern': 0.4,
-                'semantic': 0.3,
+                'pattern': 0.25,
+                'semantic': 0.25,
                 'zeroshot': 0.2,
-                'statistical': 0.1
+                'statistical': 0.1,
+                'contextual': 0.2
             }
         
         # Normalize weights
@@ -62,6 +70,7 @@ class HybridDetector(BaseDetector):
         
         self.enable_zeroshot = enable_zeroshot and ZEROSHOT_AVAILABLE
         self.enable_statistical = enable_statistical and STATISTICAL_AVAILABLE
+        self.enable_contextual = enable_contextual and CONTEXTUAL_AVAILABLE
         self.require_consensus = require_consensus
         
         # Initialize sub-detectors with lower individual thresholds
@@ -107,12 +116,24 @@ class HybridDetector(BaseDetector):
             except ImportError:
                 print("Warning: Could not initialize statistical detector.")
         
+        # Contextual correlation detector
+        self.contextual_detector = None
+        if self.enable_contextual:
+            try:
+                self.contextual_detector = ContextualCorrelationDetector(
+                    config_path=config_path or "config/patterns.yaml"
+                )
+                print("✅ Contextual correlation detector enabled")
+            except ImportError:
+                print("Warning: Could not initialize contextual detector.")
+        
         # Enhanced detection statistics
         self.detection_stats = {
             'pattern_detections': 0,
             'semantic_detections': 0,
             'zeroshot_detections': 0,
             'statistical_detections': 0,
+            'contextual_detections': 0,
             'consensus_detections': 0,
             'total_detections': 0,
             'detector_combinations': {}
@@ -132,6 +153,8 @@ class HybridDetector(BaseDetector):
             detectors['zeroshot'] = self.zeroshot_detector
         if self.statistical_detector:
             detectors['statistical'] = self.statistical_detector
+        if self.contextual_detector:
+            detectors['contextual'] = self.contextual_detector
         
         return detectors
     
@@ -149,6 +172,9 @@ class HybridDetector(BaseDetector):
         
         if self.statistical_detector:
             self.statistical_detector.setup()
+        
+        if self.contextual_detector:
+            self.contextual_detector.setup()
         
         print(f"✅ Hybrid detector setup complete with {len(self.active_detectors)} active detectors")
     
@@ -417,6 +443,12 @@ class HybridDetector(BaseDetector):
         # Statistical anomaly detector
         if self.statistical_detector:
             detector_results['statistical'] = self.statistical_detector.batch_detect(lines, file_path)
+        
+        # Contextual correlation detector
+        if self.contextual_detector:
+            # Convert lines format for contextual detector
+            line_strings = [line_content for line_content, _ in lines]
+            detector_results['contextual'] = self.contextual_detector.detect_errors(file_path, line_strings)
         
         # Create lookup dictionaries for efficient matching
         detector_dicts = {}

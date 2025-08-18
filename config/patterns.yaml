@@ -48,6 +48,48 @@ ansible_patterns:
     - "EXCEPTION:"
     - "traceback"
     - "Traceback"
+  
+  # Infrastructure retry patterns - NEW: Always detect retries for operational visibility
+  infrastructure_retry_patterns:
+    - "FAILED - RETRYING:.*EC2.*instances.*running"
+    - "FAILED - RETRYING:.*Wait until.*EC2"
+    - "FAILED - RETRYING:.*instances.*running.*retries left"
+    - "FAILED - RETRYING:.*infrastructure"
+    - "FAILED - RETRYING:.*timeout"
+    - "FAILED - RETRYING:.*connection"
+    - "FAILED - RETRYING:"  # General pattern to catch all retries
+  
+  # Infrastructure correlation patterns - NEW: Advanced detection
+  infrastructure_patterns:
+    # EC2 instance lifecycle patterns
+    - "stopped.*name.*stopped"
+    - "Ensure EC2 instances are running"
+    - "changed:.*item.*state.*stopped"
+    - "Wait until all EC2 instances are running"
+    
+  # Boot sequence patterns - NEW: System boot detection
+  boot_sequence_patterns:
+    - "System is booting up"
+    - "Unprivileged users are not permitted to log in yet"
+    - "Please come back later"
+    - "System is starting up"
+    - "boot.*in.*progress"
+    
+  # SSH provisioning patterns - NEW: Key provisioning issues
+  ssh_provisioning_patterns:
+    - "no such identity:"
+    - "ssh_provision_.*: No such file or directory"
+    - "Permission denied.*publickey"
+    - "Host key verification failed"
+    - "Could not resolve hostname"
+    
+  # Critical path dependency patterns - NEW: Impact assessment
+  critical_dependency_patterns:
+    - "bastion.*unreachable"
+    - ".*unreachable=1.*"
+    - "NO MORE HOSTS LEFT"
+    - "All hosts unreachable"
+    - "Control plane unreachable"
     - "TRACEBACK"
     
   # Failure patterns - Updated to exclude intentionally ignored failures
@@ -151,6 +193,12 @@ pattern_weights:
   assertion_failures: 0.95
   warning_patterns: 0.75  # High enough to pass hybrid threshold
   deprecation_warnings: 0.75  # High enough to pass hybrid threshold
+  # NEW: Advanced infrastructure correlation patterns
+  infrastructure_patterns: 0.85  # High priority for infra issues
+  infrastructure_retry_patterns: 0.95  # Very high priority - always detect retries
+  boot_sequence_patterns: 0.90   # Very important for timing issues
+  ssh_provisioning_patterns: 0.88 # High priority for auth failures
+  critical_dependency_patterns: 0.98 # Highest priority for blocking issues
 
 # Enhanced semantic similarity phrases based on real log analysis
 semantic_phrases:
@@ -181,6 +229,46 @@ semantic_phrases:
     - "rosa installer completion failed"
     - "cloudformation template failed"
     - "terraform apply failed"
+    
+  # Infrastructure correlation failures - NEW: Advanced contextual detection
+  infrastructure_correlation:
+    - "instance restart causing connectivity issues"
+    - "ec2 instances stopped then restarted"
+    - "infrastructure lifecycle disruption"
+    - "instance state transition failure"
+    - "post restart connectivity failure"
+  
+  # Infrastructure retry intelligence - NEW: Operational visibility
+  infrastructure_retry_intelligence:
+    - "infrastructure retry attempts indicate performance issues"
+    - "repeated retries suggest underlying infrastructure problems"
+    - "retry patterns indicate resource provisioning delays"
+    - "infrastructure timeout requiring retry strategy"
+    - "infrastructure performance degradation detected"
+    
+  # Boot sequence intelligence - NEW: System startup context
+  boot_sequence_intelligence:
+    - "system still booting wait required"
+    - "boot process incomplete retry needed"
+    - "unprivileged access during boot"
+    - "system initialization in progress"
+    - "boot completion required for access"
+    
+  # SSH provisioning context - NEW: Key management failures
+  ssh_provisioning_context:
+    - "ssh key provisioning after restart"
+    - "identity file missing post restart"
+    - "key provisioning failure correlation"
+    - "ssh authentication setup incomplete"
+    - "provisioning key not found"
+    
+  # Critical path impact - NEW: Dependency failure assessment
+  critical_path_impact:
+    - "bastion unreachable blocks entire playbook"
+    - "critical infrastructure dependency failed"
+    - "control plane access lost"
+    - "essential host unreachable"
+    - "deployment blocked by infrastructure failure"
 
 # Enhanced exclusion patterns based on real log analysis
 exclusions:
@@ -411,6 +499,113 @@ ansible_solutions:
           - "Verify Ansible module availability: ansible-doc module_name"
         category: "module_execution"
         estimated_fix_time: "10-15 minutes"
+
+  # NEW: Infrastructure correlation solutions
+  infrastructure_correlation:
+    patterns:
+      - "stopped.*name.*stopped"
+      - "Ensure EC2 instances are running"
+      - "changed:.*item.*state.*stopped"
+    solutions:
+      - title: "EC2 Instance Restart Impact Analysis"
+        confidence: 0.92
+        steps:
+          - "Wait 2-3 minutes for instance boot completion"
+          - "Verify SSH service is running: systemctl status sshd"
+          - "Check if SSH keys are properly provisioned post-restart"
+          - "Test connectivity: ansible -m ping target_hosts"
+          - "Consider adding retry logic for post-restart tasks"
+        category: "infrastructure_correlation"
+        estimated_fix_time: "5-10 minutes"
+        impact: "HIGH - Instance restarts can cause SSH connectivity failures"
+
+  # NEW: Boot sequence intelligence solutions  
+  boot_sequence_intelligence:
+    patterns:
+      - "System is booting up"
+      - "Unprivileged users are not permitted to log in yet"
+      - "Please come back later"
+    solutions:
+      - title: "System Boot Completion Wait Strategy"
+        confidence: 0.95
+        steps:
+          - "Implement wait_for module: wait_for port=22 host={{ inventory_hostname }} delay=60"
+          - "Add boot completion check: wait_for path=/var/lib/cloud/instance/boot-finished"
+          - "Use retries with delay: retries=5 delay=30"
+          - "Check system load: uptime and systemctl is-system-running"
+        category: "boot_sequence_timing"
+        estimated_fix_time: "2-5 minutes"
+        impact: "MEDIUM - Boot timing can be resolved with proper wait strategies"
+
+  # NEW: SSH provisioning correlation solutions
+  ssh_provisioning_correlation:
+    patterns:
+      - "no such identity:"
+      - "ssh_provision_.*: No such file or directory"
+    solutions:
+      - title: "SSH Key Provisioning After Instance Restart"
+        confidence: 0.90
+        steps:
+          - "Verify SSH key exists: ls -la ~/.ssh/ssh_provision_*"
+          - "Re-run SSH key provisioning: create_ssh_provision_key role"
+          - "Check key permissions: chmod 600 ~/.ssh/ssh_provision_*"
+          - "Verify key is registered: ssh-add -l"
+          - "Test manual connection: ssh -i ~/.ssh/ssh_provision_* user@host"
+        category: "ssh_key_provisioning"
+        estimated_fix_time: "5-10 minutes"
+        impact: "HIGH - SSH key provisioning failures block all remote tasks"
+
+  # NEW: Critical path dependency solutions
+  critical_path_dependency:
+    patterns:
+      - "bastion.*unreachable"
+      - ".*unreachable=1.*"
+      - "NO MORE HOSTS LEFT"
+    solutions:
+      - title: "Critical Infrastructure Dependency Failure"
+        confidence: 0.98
+        steps:
+          - "IMMEDIATE: Check bastion host status in cloud console"
+          - "Verify bastion security groups allow SSH (port 22)"
+          - "Check if bastion public IP has changed"
+          - "Test direct bastion connectivity: ssh -i key user@bastion_ip"
+          - "If bastion is down, restart instance and wait for boot"
+          - "Update inventory with correct bastion IP if changed"
+        category: "critical_dependency"
+        estimated_fix_time: "10-20 minutes"
+        impact: "CRITICAL - Bastion unreachable blocks entire playbook execution"
+
+  # NEW: Infrastructure retry solutions
+  infrastructure_retry:
+    patterns:
+      - "FAILED - RETRYING:.*EC2.*instances.*running"
+      - "FAILED - RETRYING:.*Wait until.*EC2"
+      - "FAILED - RETRYING:.*instances.*running.*retries left"
+    solutions:
+      - title: "Infrastructure Retry Pattern Analysis"
+        confidence: 0.95
+        steps:
+          - "Monitor retry frequency - multiple retries indicate infrastructure issues"
+          - "Check cloud provider status page for service disruptions"
+          - "Verify resource quotas and limits in cloud console"
+          - "Review instance types and availability zones for capacity issues"
+          - "Consider implementing exponential backoff for retry strategies"
+          - "Set up monitoring alerts for retry pattern trends"
+        category: "infrastructure_retry"
+        estimated_fix_time: "5-15 minutes (monitoring setup)"
+        impact: "MEDIUM - Performance degradation and delayed deployments"
+        
+      - title: "EC2 Instance Provisioning Performance"
+        confidence: 0.90
+        steps:
+          - "Check AWS Service Health Dashboard for EC2 issues"
+          - "Verify sufficient capacity in target availability zones"
+          - "Consider switching to different instance types if persistent"
+          - "Review CloudWatch metrics for EC2 launch times"
+          - "Implement retry logic with jitter to avoid thundering herd"
+        category: "infrastructure_performance"
+        estimated_fix_time: "10-30 minutes"
+        impact: "MEDIUM - Infrastructure performance issues affecting automation"
 
 # Solution matching configuration
 solution_matching:
