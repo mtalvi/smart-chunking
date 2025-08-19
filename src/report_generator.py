@@ -39,6 +39,32 @@ class ReportGenerator:
         
         return self.results_data
     
+    def _normalize_summary(self, summary: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize summary data to handle different formats."""
+        normalized = summary.copy()
+        
+        # Handle nested processing_stats structure
+        if 'processing_stats' in summary:
+            processing_stats = summary['processing_stats']
+            normalized.update(processing_stats)
+        
+        # Ensure required fields exist with fallback values
+        if 'total_files_processed' not in normalized:
+            normalized['total_files_processed'] = normalized.get('files_with_errors', 1)
+        
+        if 'total_errors_found' not in normalized:
+            normalized['total_errors_found'] = normalized.get('total_errors', 0)
+        
+        if 'total_lines_processed' not in normalized:
+            normalized['total_lines_processed'] = normalized.get('total_errors_found', 0)
+        
+        # Ensure numeric fields are properly typed
+        normalized['total_files_processed'] = int(normalized.get('total_files_processed', 1))
+        normalized['total_errors_found'] = int(normalized.get('total_errors_found', 0))
+        normalized['total_lines_processed'] = int(normalized.get('total_lines_processed', 0))
+        
+        return normalized
+    
     def generate_html_report(self, output_path: str = "analysis_report.html") -> str:
         """Generate a modern, responsive HTML report."""
         data = self.load_results()
@@ -46,7 +72,7 @@ class ReportGenerator:
         html_content = self._create_html_template()
         
         # Generate summary section
-        summary_html = self._generate_summary_html(data['summary'])
+        summary_html = self._generate_summary_html(self._normalize_summary(data['summary']))
         
         # Generate clustering section
         clustering_html = self._generate_clustering_html(data['results'])
@@ -82,7 +108,7 @@ class ReportGenerator:
         report.append("")
         
                 # Summary
-        summary = data['summary']
+        summary = self._normalize_summary(data['summary'])
         report.append("📊 SUMMARY")
         report.append("-" * 40)
         report.append(f"• Total Files Processed: {summary['total_files_processed']}")
@@ -278,7 +304,7 @@ class ReportGenerator:
     def print_quick_summary(self) -> None:
         """Print a quick summary to console."""
         data = self.load_results()
-        summary = data['summary']
+        summary = self._normalize_summary(data['summary'])
         
         print("\n🔍 LOG ANALYSIS QUICK SUMMARY")
         print("=" * 40)

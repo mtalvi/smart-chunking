@@ -290,32 +290,96 @@ class LogAnalysisWebServer:
         @self.app.route('/export/<format>')
         def export_data(format):
             """Export data in various formats."""
+            temp_file = None
             try:
+                # Check if analysis results exist
+                if not os.path.exists(self.results_path):
+                    return jsonify({'error': 'No analysis results found. Please run an analysis first.'}), 404
+                
+                # Initialize report generator if needed
                 if self.report_generator is None:
                     self.report_generator = ReportGenerator(self.results_path)
                 
+                # Generate timestamp for unique filenames
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                
                 if format == 'html':
-                    output_path = 'temp_report.html'
-                    self.report_generator.generate_html_report(output_path)
-                    return send_from_directory('.', output_path, as_attachment=True, 
-                                             download_name=f'analysis_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html')
+                    # Create temporary file for HTML export
+                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8')
+                    temp_file.close()
+                    
+                    # Generate HTML report
+                    self.report_generator.generate_html_report(temp_file.name)
+                    download_name = f'smart_chunking_analysis_{timestamp}.html'
+                    
+                    return send_from_directory(
+                        os.path.dirname(temp_file.name), 
+                        os.path.basename(temp_file.name),
+                        as_attachment=True, 
+                        download_name=download_name,
+                        mimetype='text/html'
+                    )
                 
                 elif format == 'json':
-                    output_path = 'temp_summary.json'
-                    self.report_generator.generate_json_summary(output_path)
-                    return send_from_directory('.', output_path, as_attachment=True,
-                                             download_name=f'analysis_summary_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+                    # Create temporary file for JSON export
+                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8')
+                    temp_file.close()
+                    
+                    # Generate JSON summary
+                    self.report_generator.generate_json_summary(temp_file.name)
+                    download_name = f'smart_chunking_summary_{timestamp}.json'
+                    
+                    return send_from_directory(
+                        os.path.dirname(temp_file.name), 
+                        os.path.basename(temp_file.name),
+                        as_attachment=True, 
+                        download_name=download_name,
+                        mimetype='application/json'
+                    )
                 
                 elif format == 'text':
-                    output_path = 'temp_report.txt'
-                    self.report_generator.generate_text_report(output_path)
-                    return send_from_directory('.', output_path, as_attachment=True,
-                                             download_name=f'analysis_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    # Create temporary file for text export
+                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8')
+                    temp_file.close()
+                    
+                    # Generate text report
+                    self.report_generator.generate_text_report(temp_file.name)
+                    download_name = f'smart_chunking_report_{timestamp}.txt'
+                    
+                    return send_from_directory(
+                        os.path.dirname(temp_file.name), 
+                        os.path.basename(temp_file.name),
+                        as_attachment=True, 
+                        download_name=download_name,
+                        mimetype='text/plain'
+                    )
                 
                 else:
-                    return jsonify({'error': 'Unsupported format'}), 400
+                    return jsonify({'error': f'Unsupported export format: {format}. Supported formats: html, json, text'}), 400
+                    
+            except FileNotFoundError as e:
+                logger.error(f"Export failed - file not found: {e}")
+                return jsonify({'error': 'Analysis results file not found. Please run an analysis first.'}), 404
+                
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Export failed for format {format}: {e}")
+                return jsonify({'error': f'Export failed: {str(e)}'}), 500
+                
+            finally:
+                # Schedule cleanup of temporary file after a delay
+                if temp_file and os.path.exists(temp_file.name):
+                    def cleanup_temp_file():
+                        try:
+                            time.sleep(5)  # Wait 5 seconds to ensure download completed
+                            if os.path.exists(temp_file.name):
+                                os.remove(temp_file.name)
+                                logger.info(f"Cleaned up temporary export file: {temp_file.name}")
+                        except Exception as cleanup_error:
+                            logger.warning(f"Failed to cleanup temp file {temp_file.name}: {cleanup_error}")
+                    
+                    # Run cleanup in background thread
+                    cleanup_thread = threading.Thread(target=cleanup_temp_file, daemon=True)
+                    cleanup_thread.start()
     
     def _run_analysis(self, input_path: str):
         """Run analysis in background thread."""
@@ -1805,23 +1869,78 @@ class LogAnalysisWebServer:
         }
         
         async function exportData(format) {
+            // Show loading indicator
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = `Exporting ${format.toUpperCase()}...`;
+            button.disabled = true;
+            
             try {
                 const response = await fetch(`/export/${format}`);
+                
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = response.headers.get('Content-Disposition').split('filename=')[1];
+                    
+                    // Extract filename from Content-Disposition header or use fallback
+                    let filename = `smart_chunking_export_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.${format}`;
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
+                    
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'alert alert-success';
+                    successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;';
+                    successMsg.textContent = `✅ ${format.toUpperCase()} export completed successfully!`;
+                    document.body.appendChild(successMsg);
+                    
+                    // Remove success message after 3 seconds
+                    setTimeout(() => {
+                        if (successMsg.parentNode) {
+                            document.body.removeChild(successMsg);
+                        }
+                    }, 3000);
+                    
                 } else {
-                    throw new Error('Export failed');
+                    // Handle error response
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Export failed with status ${response.status}`);
                 }
+                
             } catch (error) {
-                alert(`Export failed: ${error.message}`);
+                console.error('Export error:', error);
+                
+                // Show error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'alert alert-error';
+                errorMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 4px; max-width: 400px;';
+                errorMsg.textContent = `❌ Export failed: ${error.message}`;
+                document.body.appendChild(errorMsg);
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    if (errorMsg.parentNode) {
+                        document.body.removeChild(errorMsg);
+                    }
+                }, 5000);
+                
+            } finally {
+                // Restore button state
+                button.textContent = originalText;
+                button.disabled = false;
             }
         }
         
