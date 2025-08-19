@@ -57,6 +57,27 @@ class LogAnalysisWebServer:
         # Setup routes
         self._setup_routes()
     
+    def _clear_previous_analysis(self):
+        """Clear previous analysis results and reset state for new analysis."""
+        try:
+            # Remove existing results file if it exists
+            if os.path.exists(self.results_path):
+                os.remove(self.results_path)
+                logger.info(f"Cleared previous analysis file: {self.results_path}")
+            
+            # Reset analysis state
+            self.analysis_in_progress = False
+            self.analysis_result = None
+            
+            # Reset report generator cache
+            if self.report_generator is not None:
+                self.report_generator.results_data = None
+                logger.info("Cleared report generator cache")
+                
+        except Exception as e:
+            logger.warning(f"Error clearing previous analysis: {e}")
+            # Continue anyway - don't block new analysis
+    
     def _setup_routes(self):
         """Setup Flask routes."""
         
@@ -69,6 +90,9 @@ class LogAnalysisWebServer:
         def analyze_logs():
             """Analyze uploaded or pasted logs."""
             try:
+                # Clear previous analysis results and state
+                self._clear_previous_analysis()
+                
                 # Get input method
                 input_method = request.form.get('input_method', 'paste')
                 
@@ -122,6 +146,13 @@ class LogAnalysisWebServer:
             except Exception as e:
                 flash(f'Error processing input: {str(e)}')
                 return redirect(url_for('landing_page'))
+        
+        @self.app.route('/clear')
+        def clear_analysis():
+            """Clear previous analysis and redirect to landing page."""
+            self._clear_previous_analysis()
+            flash('Previous analysis cleared. Ready for new analysis.')
+            return redirect(url_for('landing_page'))
         
         @self.app.route('/progress')
         def analysis_progress():
@@ -1643,7 +1674,9 @@ class LogAnalysisWebServer:
                         if (solution.steps && solution.steps.length > 0) {
                             solutionsHtml += '<ol>';
                             solution.steps.forEach(step => {
-                                solutionsHtml += `<li style="margin-bottom: 5px;">${escapeHtml(step)}</li>`;
+                                // Remove "Step X:" prefix to avoid duplication with ordered list numbering
+                                const cleanStep = step.replace(/^Step \d+:\s*/, '');
+                                solutionsHtml += `<li style="margin-bottom: 5px;">${escapeHtml(cleanStep)}</li>`;
                             });
                             solutionsHtml += '</ol>';
                         }
